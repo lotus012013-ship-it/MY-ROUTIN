@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>루틴 RPG</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6c63ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="루틴RPG">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+  }
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0f0e17; --surface: #1a1a2e; --surface2: #16213e; --border: #2a2a4a;
+    --health: #ff6b6b; --growth: #6c63ff; --life: #43e97b;
+    --gold: #ffd700; --gold-dim: #3d3200;
+    --text: #e8e8f0; --text-dim: #7a7a9a;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+    min-height: 100vh; max-width: 430px; margin: 0 auto; padding-bottom: 80px;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; z-index: 100;
+  }
+  .nav-btn {
+    flex: 1; padding: 12px 4px 10px; background: none; border: none;
+    color: var(--text-dim); font-size: 10px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; transition: color 0.2s;
+  }
+  .nav-btn .icon { font-size: 22px; }
+  .nav-btn.active { color: var(--gold); }
+
+  .screen { display: none; padding: 20px 16px; }
+  .screen.active { display: block; }
+  .header { margin-bottom: 20px; }
+  .header h1 { font-size: 22px; font-weight: 700; }
+  .header p { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+
+  /* TODAY SUMMARY */
+  .today-summary {
+    background: var(--surface); border-radius: 20px;
+    padding: 20px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .ring-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+  .ring-fg { fill: none; stroke: var(--gold); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.5s; }
+  .ring-text {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: 18px; font-weight: 700;
+  }
+  .ring-text span { font-size: 10px; color: var(--text-dim); font-weight: 400; }
+  .summary-info { flex: 1; }
+  .summary-info h2 { font-size: 15px; font-weight: 700; }
+  .char-title-badge {
+    display: inline-block; margin-top: 4px; font-size: 11px; padding: 2px 10px;
+    background: var(--gold-dim); color: var(--gold); border-radius: 20px; border: 1px solid var(--gold);
+  }
+  .summary-info p { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+
+  /* EVENT BANNER */
+  .event-banner {
+    border-radius: 16px; padding: 12px 16px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+    border: 1px solid; animation: pulse-border 2s ease-in-out infinite;
+  }
+  @keyframes pulse-border {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+    50%      { box-shadow: 0 0 0 4px rgba(255,215,0,0.15); }
+  }
+  .event-icon { font-size: 28px; }
+  .event-text h4 { font-size: 14px; font-weight: 700; }
+  .event-text p  { font-size: 12px; margin-top: 2px; }
+
+  /* MYSTERY ROUTINE highlight */
+  .routine-card {
+    background: var(--surface); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+    border: 1px solid transparent; transition: all 0.15s; cursor: pointer; user-select: none;
+    position: relative; overflow: hidden;
+  }
+  .routine-card.done { opacity: 0.45; border-color: var(--border); }
+  .routine-card.done .routine-name { text-decoration: line-through; }
+  .routine-card.mystery {
+    border-color: var(--gold) !important;
+    background: linear-gradient(135deg, var(--surface) 60%, #2a2000 100%);
+  }
+  .routine-card.mystery::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.06), transparent);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+  .mystery-badge {
+    position: absolute; top: 6px; right: 8px;
+    font-size: 10px; font-weight: 700; color: var(--gold);
+    background: var(--gold-dim); padding: 1px 6px; border-radius: 10px;
+  }
+  .check-circle {
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 14px; transition: all 0.2s;
+  }
+  .routine-card.done .check-circle { background: var(--gold); border-color: var(--gold); color: #000; }
+  .routine-info { flex: 1; }
+  .routine-name { font-size: 14px; font-weight: 500; }
+  .routine-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .routine-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+
+  /* POP ANIMATION on check */
+  .routine-card.popping .check-circle { animation: pop-circle 0.35s ease; }
+  @keyframes pop-circle { 0%{transform:scale(1)} 40%{transform:scale(1.5)} 100%{transform:scale(1)} }
+
+  /* FLOATING REWARD */
+  .float-reward {
+    position: fixed; font-weight: 900; pointer-events: none;
+    z-index: 500; animation: float-up 1.1s ease forwards;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    font-size: 22px;
+  }
+  @keyframes float-up {
+    0%   { transform: translateY(0) scale(0.5); opacity: 1; }
+    30%  { transform: translateY(-20px) scale(1.2); opacity: 1; }
+    100% { transform: translateY(-80px) scale(0.9); opacity: 0; }
+  }
+
+  /* COMBO */
+  .combo-display {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 500; text-align: center; pointer-events: none;
+    animation: combo-in 0.3s ease;
+  }
+  @keyframes combo-in { 0%{transform:translateX(-50%) scale(0.5)} 60%{transform:translateX(-50%) scale(1.1)} 100%{transform:translateX(-50%) scale(1)} }
+  .combo-text { font-size: 28px; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,0.8); }
+  .combo-sub  { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+
+  /* MILESTONE OVERLAY */
+  .milestone-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 400;
+    align-items: center; justify-content: center;
+  }
+  .milestone-overlay.open { display: flex; }
+  .milestone-box { text-align: center; padding: 40px 30px; animation: pop 0.4s ease; }
+  @keyframes pop { 0%{transform:scale(0.4);opacity:0} 60%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+  .milestone-emoji { font-size: 72px; margin-bottom: 12px; }
+  .milestone-title { font-size: 26px; font-weight: 900; color: var(--gold); margin-bottom: 8px; }
+  .milestone-sub { font-size: 15px; color: var(--text-dim); }
+  .milestone-close { margin-top: 24px; background: var(--gold); color: #000; border: none; border-radius: 14px; padding: 12px 36px; font-size: 16px; font-weight: 700; cursor: pointer; }
+
+  /* JACKPOT OVERLAY */
+  .jackpot-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.9); z-index: 450;
+    align-items: center; justify-content: center; flex-direction: column;
+  }
+  .jackpot-overlay.open { display: flex; }
+  .jackpot-box { text-align: center; animation: pop 0.35s ease; }
+  .jackpot-slots { font-size: 48px; margin-bottom: 16px; letter-spacing: 12px; }
+  .jackpot-title { font-size: 36px; font-weight: 900; background: linear-gradient(90deg,#ff6b6b,#ffd700,#43e97b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .jackpot-reward { font-size: 20px; color: var(--gold); margin-top: 8px; }
+  .jackpot-close { margin-top: 24px; background: linear-gradient(90deg,#ff6b6b,#ffd700); color: #000; border: none; border-radius: 14px; padding: 12px 36px; font-size: 16px; font-weight: 700; cursor: pointer; }
+
+  /* PARTICLES */
+  .particle {
+    position: fixed; border-radius: 50%; pointer-events: none; z-index: 490;
+    animation: particle-fly var(--dur) ease forwards;
+  }
+  @keyframes particle-fly {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+
+  /* CAT SECTION */
+  .cat-section { margin-bottom: 20px; }
+  .cat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .cat-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .cat-header h3 { font-size: 15px; font-weight: 600; }
+  .cat-count { margin-left: auto; font-size: 12px; color: var(--text-dim); }
+
+  /* BUNDLE */
+  .bundle-wrap { margin-bottom: 20px; }
+  .bundle-header {
+    background: var(--surface2); border-radius: 14px 14px 0 0; padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    border: 1px solid var(--border); border-bottom: none;
+  }
+  .bundle-title { font-size: 14px; font-weight: 600; }
+  .bundle-prog { margin-left: auto; font-size: 12px; color: var(--text-dim); }
+  .bundle-body {
+    background: var(--surface2); border-radius: 0 0 14px 14px;
+    border: 1px solid var(--border); border-top: none;
+    overflow: hidden; max-height: 1000px; transition: max-height 0.3s;
+  }
+  .bundle-body.collapsed { max-height: 0; }
+  .bundle-body .routine-card { border-radius:0; border:none; border-bottom:1px solid var(--border); background:transparent; margin-bottom:0; }
+  .bundle-body .routine-card:last-child { border-bottom: none; }
+
+  /* CHALLENGE */
+  .challenge-card { background:var(--gold-dim); border:1px solid rgba(255,215,0,0.3); border-radius:14px; padding:14px 16px; margin-bottom:8px; }
+  .challenge-card-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .challenge-card-header h4 { font-size:14px; font-weight:600; flex:1; }
+  .challenge-done-btn { font-size:11px; padding:4px 10px; background:var(--gold); color:#000; border:none; border-radius:20px; cursor:pointer; font-weight:700; }
+  .challenge-bar { height:6px; background:rgba(255,215,0,0.2); border-radius:3px; overflow:hidden; }
+  .challenge-bar-fill { height:100%; background:var(--gold); border-radius:3px; transition:width 0.3s; }
+  .challenge-info { display:flex; justify-content:space-between; margin-top:6px; font-size:11px; color:var(--text-dim); }
+
+  /* CHARACTER */
+  .char-hero {
+    background: linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f0e17 100%);
+    border:1px solid var(--border); border-radius:24px;
+    padding:28px 20px 24px; margin-bottom:20px; text-align:center; position:relative; overflow:hidden;
+  }
+  .char-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,0.08) 0%,transparent 70%); }
+  .char-avatar-big { font-size:72px; margin-bottom:10px; line-height:1; }
+  .char-main-title { font-size:22px; font-weight:800; color:var(--gold); text-shadow:0 0 20px rgba(255,215,0,0.4); margin-bottom:6px; }
+  .char-sub-desc { font-size:13px; color:var(--text-dim); line-height:1.6; max-width:260px; margin:0 auto; }
+
+  .stat-ranks { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px; }
+  .rank-card { background:var(--surface); border-radius:16px; padding:16px 12px; border:1px solid var(--border); text-align:center; position:relative; overflow:hidden; }
+  .rank-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; }
+  .rank-card.health::after { background:var(--health); }
+  .rank-card.growth::after { background:var(--growth); }
+  .rank-card.life::after   { background:var(--life); }
+  .rank-icon { font-size:26px; margin-bottom:6px; }
+  .rank-cat  { font-size:10px; color:var(--text-dim); margin-bottom:4px; }
+  .rank-name { font-size:13px; font-weight:700; margin-bottom:8px; }
+  .rank-pts  { font-size:22px; font-weight:800; }
+  .rank-card.health .rank-pts { color:var(--health); }
+  .rank-card.growth .rank-pts { color:var(--growth); }
+  .rank-card.life   .rank-pts { color:var(--life); }
+  .rank-next { font-size:10px; color:var(--text-dim); margin-top:4px; }
+  .rank-bar  { height:4px; background:var(--border); border-radius:2px; margin-top:8px; overflow:hidden; }
+  .rank-bar-fill { height:100%; border-radius:2px; transition:width 0.5s; }
+
+  .title-collection { background:var(--surface); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border); }
+  .title-collection h3 { font-size:15px; font-weight:600; margin-bottom:4px; }
+  .title-collection p { font-size:12px; color:var(--text-dim); margin-bottom:16px; }
+  .title-grid { display:flex; flex-direction:column; gap:8px; }
+  .title-item { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:12px; background:var(--surface2); border:1px solid var(--border); opacity:0.35; }
+  .title-item.unlocked { opacity:1; border-color:var(--gold); background:var(--gold-dim); }
+  .title-item.current  { box-shadow:0 0 0 2px var(--gold); }
+  .title-emoji { font-size:22px; }
+  .title-info  { flex:1; }
+  .title-name  { font-size:14px; font-weight:700; color:var(--gold); }
+  .title-cond  { font-size:11px; color:var(--text-dim); margin-top:2px; }
+
+  .month-card { background:var(--surface); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border); }
+  .month-card h3 { font-size:15px; font-weight:600; margin-bottom:16px; }
+  .month-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .month-stat { text-align:center; }
+  .month-stat-val { font-size:22px; font-weight:700; }
+  .month-stat-label { font-size:11px; color:var(--text-dim); margin-top:4px; }
+
+  /* RECORDS */
+  .calendar-card { background:var(--surface); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border); }
+  .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .cal-header h3 { font-size:16px; font-weight:600; }
+  .cal-nav { display:flex; gap:8px; }
+  .cal-nav button { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:4px 10px; cursor:pointer; font-size:14px; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-day-label { text-align:center; font-size:11px; color:var(--text-dim); padding:4px; }
+  .cal-day { aspect-ratio:1; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; background:var(--surface2); }
+  .cal-day.empty   { background:transparent; }
+  .cal-day.today   { border:2px solid var(--gold); }
+  .cal-day.full    { background:#2d6a4f; color:#fff; font-size:14px; }
+  .cal-day.partial { background:#1e3a2f; color:#b7e4c7; }
+  .cal-day.future  { opacity:0.25; }
+  .streak-row { display:flex; gap:12px; margin-bottom:20px; }
+  .streak-card { flex:1; background:var(--surface); border-radius:16px; padding:16px; border:1px solid var(--border); text-align:center; }
+  .streak-val   { font-size:28px; font-weight:700; color:var(--gold); }
+  .streak-label { font-size:12px; color:var(--text-dim); margin-top:4px; }
+  .cat-breakdown { background:var(--surface); border-radius:20px; padding:20px; border:1px solid var(--border); }
+  .cat-breakdown h3 { font-size:15px; font-weight:600; margin-bottom:16px; }
+  .breakdown-item { margin-bottom:14px; }
+  .breakdown-label { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
+  .breakdown-bar  { height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+  .breakdown-fill { height:100%; border-radius:4px; transition:width 0.5s; }
+
+  /* MANAGE */
+  .manage-section { margin-bottom:24px; }
+  .manage-section h3 { font-size:15px; font-weight:600; margin-bottom:12px; }
+  .add-btn { width:100%; padding:14px; background:var(--surface); border:1px dashed var(--border); color:var(--text-dim); border-radius:14px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px; }
+  .add-btn:hover { border-color:var(--gold); color:var(--gold); }
+  .routine-manage-card { background:var(--surface); border-radius:14px; padding:12px 16px; margin-bottom:8px; display:flex; align-items:center; gap:12px; border:1px solid var(--border); }
+  .manage-dot  { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .manage-info { flex:1; }
+  .manage-name { font-size:14px; font-weight:500; }
+  .manage-sub  { font-size:11px; color:var(--text-dim); margin-top:2px; }
+  .manage-actions { display:flex; gap:6px; }
+  .icon-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text-dim); border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; }
+  .toggle-btn { background:none; border:none; cursor:pointer; font-size:20px; padding:0; }
+  .challenge-manage-card { background:var(--gold-dim); border-radius:14px; padding:12px 16px; margin-bottom:8px; display:flex; align-items:center; gap:12px; border:1px solid rgba(255,215,0,0.3); }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border-radius:24px 24px 0 0; padding:24px; width:100%; max-width:430px; max-height:85vh; overflow-y:auto; }
+  .modal h3 { font-size:18px; font-weight:700; margin-bottom:20px; }
+  .form-group { margin-bottom:16px; }
+  .form-group label { font-size:13px; color:var(--text-dim); display:block; margin-bottom:8px; }
+  .form-group input,.form-group select { width:100%; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:12px; font-size:14px; outline:none; font-family:inherit; }
+  .form-group input:focus,.form-group select:focus { border-color:var(--gold); }
+  .form-actions { display:flex; gap:12px; margin-top:20px; }
+  .btn { flex:1; padding:14px; border:none; border-radius:14px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .btn-primary   { background:var(--gold); color:#000; }
+  .btn-secondary { background:var(--surface2); color:var(--text-dim); }
+  .btn-danger    { background:#3d1f1f; color:var(--health); border:1px solid var(--health); }
+  .select-group { display:flex; gap:8px; flex-wrap:wrap; }
+  .select-btn { padding:8px 16px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--text-dim); cursor:pointer; font-size:13px; font-family:inherit; transition:all 0.2s; }
+  .select-btn.selected { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:10px 20px; font-size:13px; z-index:300; opacity:0; transition:opacity 0.3s; white-space:nowrap; max-width:90%; }
+  .toast.show { opacity:1; }
+
+  /* RANK UP */
+  .rankup-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:410; align-items:center; justify-content:center; flex-direction:column; }
+  .rankup-overlay.open { display:flex; }
+  .rankup-box { text-align:center; padding:40px 30px; animation:pop 0.4s ease; }
+  .rankup-emoji { font-size:80px; margin-bottom:16px; }
+  .rankup-cat   { font-size:14px; color:var(--text-dim); margin-bottom:8px; }
+  .rankup-title { font-size:30px; font-weight:900; margin-bottom:8px; }
+  .rankup-sub   { font-size:15px; color:var(--text-dim); }
+  .rankup-close { margin-top:28px; background:var(--gold); color:#000; border:none; border-radius:14px; padding:12px 36px; font-size:16px; font-weight:700; cursor:pointer; }
+
+  .empty-state { text-align:center; padding:30px; color:var(--text-dim); font-size:14px; }
+</style>
+</head>
+<body>
+
+<!-- TODAY -->
+<div id="screen-today" class="screen active">
+  <div class="header">
+    <h1 id="today-date"></h1>
+    <p id="today-greeting"></p>
+  </div>
+  <div class="today-summary">
+    <div class="ring-wrap">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle class="ring-bg" cx="40" cy="40" r="32"/>
+        <circle class="ring-fg" id="ring-fg" cx="40" cy="40" r="32" stroke-dasharray="201" stroke-dashoffset="201"/>
+      </svg>
+      <div class="ring-text"><strong id="ring-pct">0%</strong><span>완료</span></div>
+    </div>
+    <div class="summary-info" style="flex:1">
+      <h2 id="char-display-name">내 캐릭터</h2>
+      <div class="char-title-badge" id="today-char-title">새내기 루티너</div>
+      <p id="today-done-count" style="margin-top:8px">0 / 0 완료</p>
+    </div>
+  </div>
+  <div id="event-banner-wrap"></div>
+  <div id="routine-list"></div>
+</div>
+
+<!-- CHARACTER -->
+<div id="screen-char" class="screen">
+  <div class="header"><h1>캐릭터</h1><p>루틴마다 다른 스탯이 자라요</p></div>
+  <div class="char-hero">
+    <div class="char-avatar-big" id="char-avatar">🧙</div>
+    <div class="char-main-title" id="char-main-title">칭호</div>
+    <div class="char-sub-desc" id="char-sub-desc"></div>
+  </div>
+  <div class="stat-ranks" id="stat-ranks"></div>
+  <div class="month-card">
+    <h3>📅 이번달 기록</h3>
+    <div class="month-stats">
+      <div class="month-stat"><div class="month-stat-val" id="month-rate" style="color:var(--gold)">0%</div><div class="month-stat-label">평균 달성률</div></div>
+      <div class="month-stat"><div class="month-stat-val" id="month-total" style="color:var(--health)">0</div><div class="month-stat-label">총 완료</div></div>
+      <div class="month-stat"><div class="month-stat-val" id="month-perfect" style="color:var(--life)">0</div><div class="month-stat-label">완벽한 날</div></div>
+    </div>
+  </div>
+  <div class="title-collection">
+    <h3>🏆 칭호 수집</h3>
+    <p>달성 조건을 채우면 칭호가 해금돼요</p>
+    <div class="title-grid" id="title-grid"></div>
+  </div>
+</div>
+
+<!-- RECORDS -->
+<div id="screen-records" class="screen">
+  <div class="header"><h1>기록</h1></div>
+  <div class="streak-row">
+    <div class="streak-card"><div class="streak-val" id="streak-cur">0</div><div class="streak-label">🔥 현재 연속</div></div>
+    <div class="streak-card"><div class="streak-val" id="streak-best">0</div><div class="streak-label">⚡ 최고 연속</div></div>
+  </div>
+  <div class="calendar-card">
+    <div class="cal-header">
+      <h3 id="cal-month-label"></h3>
+      <div class="cal-nav"><button onclick="calPrev()">‹</button><button onclick="calNext()">›</button></div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+  <div class="cat-breakdown">
+    <h3>카테고리별 달성률</h3>
+    <div id="breakdown-list"></div>
+  </div>
+</div>
+
+<!-- MANAGE -->
+<div id="screen-manage" class="screen">
+  <div class="header"><h1>루틴 관리</h1></div>
+  <div class="manage-section">
+    <h3>내 루틴</h3>
+    <div id="manage-list"></div>
+    <button class="add-btn" onclick="openAddRoutine()">+ 루틴 추가</button>
+  </div>
+  <div class="manage-section">
+    <h3>⚡ 챌린지</h3>
+    <div id="challenge-manage-list"></div>
+    <button class="add-btn" onclick="openAddChallenge()">+ 챌린지 추가</button>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showScreen('today',this)"><span class="icon">☀️</span>오늘</button>
+  <button class="nav-btn" onclick="showScreen('char',this)"><span class="icon">🧙</span>캐릭터</button>
+  <button class="nav-btn" onclick="showScreen('records',this)"><span class="icon">📊</span>기록</button>
+  <button class="nav-btn" onclick="showScreen('manage',this)"><span class="icon">⚙️</span>관리</button>
+</nav>
+
+<!-- ROUTINE MODAL -->
+<div class="modal-overlay" id="routine-modal">
+  <div class="modal">
+    <h3 id="routine-modal-title">루틴 추가</h3>
+    <input type="hidden" id="edit-routine-id">
+    <div class="form-group"><label>루틴 이름</label><input type="text" id="routine-name-input" placeholder="예: 영양제 먹기"></div>
+    <div class="form-group"><label>카테고리</label>
+      <div class="select-group" id="cat-select">
+        <button class="select-btn selected" data-val="health" onclick="selectCat(this)">❤️ 건강</button>
+        <button class="select-btn" data-val="growth" onclick="selectCat(this)">🧠 자기개발</button>
+        <button class="select-btn" data-val="life" onclick="selectCat(this)">🌿 생활습관</button>
+      </div>
+    </div>
+    <div class="form-group"><label>주기</label>
+      <div class="select-group" id="freq-select">
+        <button class="select-btn selected" data-val="daily" onclick="selectFreq(this)">매일</button>
+        <button class="select-btn" data-val="weekly3" onclick="selectFreq(this)">주 3회</button>
+        <button class="select-btn" data-val="weekly" onclick="selectFreq(this)">주 1회</button>
+      </div>
+    </div>
+    <div class="form-group"><label>그룹 (선택)</label>
+      <div class="select-group" id="group-select">
+        <button class="select-btn selected" data-val="" onclick="selectGroup(this)">없음</button>
+        <button class="select-btn" data-val="night" onclick="selectGroup(this)">🌙 나이트 루틴</button>
+        <button class="select-btn" data-val="morning" onclick="selectGroup(this)">🌅 모닝 루틴</button>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('routine-modal')">취소</button>
+      <button class="btn btn-danger" id="delete-routine-btn" style="display:none" onclick="deleteCurrentRoutine()">삭제</button>
+      <button class="btn btn-primary" onclick="saveRoutine()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHALLENGE MODAL -->
+<div class="modal-overlay" id="challenge-modal">
+  <div class="modal">
+    <h3 id="challenge-modal-title">챌린지 추가</h3>
+    <input type="hidden" id="edit-challenge-id">
+    <div class="form-group"><label>챌린지 이름</label><input type="text" id="challenge-name-input" placeholder="예: 밀가루 2주 금지"></div>
+    <div class="form-group"><label>기간</label>
+      <div class="select-group" id="duration-select">
+        <button class="select-btn selected" data-val="7" onclick="selectDuration(this)">1주일</button>
+        <button class="select-btn" data-val="14" onclick="selectDuration(this)">2주일</button>
+        <button class="select-btn" data-val="21" onclick="selectDuration(this)">3주일</button>
+        <button class="select-btn" data-val="30" onclick="selectDuration(this)">1개월</button>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('challenge-modal')">취소</button>
+      <button class="btn btn-danger" id="delete-challenge-btn" style="display:none" onclick="deleteCurrentChallenge()">삭제</button>
+      <button class="btn btn-primary" onclick="saveChallenge()">시작</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MILESTONE -->
+<div class="milestone-overlay" id="milestone-overlay" onclick="closeMilestone()">
+  <div class="milestone-box">
+    <div class="milestone-emoji" id="milestone-emoji">🎉</div>
+    <div class="milestone-title" id="milestone-title"></div>
+    <div class="milestone-sub" id="milestone-sub"></div>
+    <button class="milestone-close" onclick="closeMilestone()">계속하기</button>
+  </div>
+</div>
+
+<!-- JACKPOT -->
+<div class="jackpot-overlay" id="jackpot-overlay" onclick="closeJackpot()">
+  <div class="jackpot-box">
+    <div class="jackpot-slots" id="jackpot-slots">🎰🎰🎰</div>
+    <div class="jackpot-title">JACKPOT!</div>
+    <div class="jackpot-reward" id="jackpot-reward"></div>
+    <button class="jackpot-close" onclick="closeJackpot()">🎉 받기!</button>
+  </div>
+</div>
+
+<!-- RANKUP -->
+<div class="rankup-overlay" id="rankup-overlay" onclick="closeRankup()">
+  <div class="rankup-box">
+    <div class="rankup-emoji" id="rankup-emoji">⬆️</div>
+    <div class="rankup-cat" id="rankup-cat"></div>
+    <div class="rankup-title" id="rankup-title"></div>
+    <div class="rankup-sub" id="rankup-sub"></div>
+    <button class="rankup-close" onclick="closeRankup()">확인</button>
+  </div>
+</div>
+
+<script>
+// ── STAT TABLES ───────────────────────────────────
+const HEALTH_RANKS = [
+  {pts:0,  name:'환자',    emoji:'🤒'},{pts:10, name:'일반인',  emoji:'🧍'},
+  {pts:30, name:'운동러',  emoji:'🏃'},{pts:60, name:'건강인',  emoji:'💪'},
+  {pts:100,name:'철인',    emoji:'🦾'},{pts:150,name:'슈퍼바디',emoji:'⚡'},
+];
+const GROWTH_RANKS = [
+  {pts:0,  name:'초보자',  emoji:'🌱'},{pts:10, name:'학습자',  emoji:'📖'},
+  {pts:30, name:'독서가',  emoji:'📚'},{pts:60, name:'지식인',  emoji:'🎓'},
+  {pts:100,name:'현자',    emoji:'🧠'},{pts:150,name:'마스터',  emoji:'✨'},
+];
+const LIFE_RANKS = [
+  {pts:0,  name:'어수선',   emoji:'🌀'},{pts:10, name:'보통',     emoji:'🏠'},
+  {pts:30, name:'깔끔',     emoji:'✨'},{pts:60, name:'생활달인', emoji:'🎯'},
+  {pts:100,name:'생활의 신',emoji:'🌟'},{pts:150,name:'전설',     emoji:'👑'},
+];
+const COMBINED_TITLES = [
+  {id:'beginner',       emoji:'🌱',  name:'새내기 루티너',  desc:'시작한 것만으로도 대단해요',                    cond:(h,g,l)=>h+g+l<30,             condText:'합산 30 미만'},
+  {id:'healthy_scholar',emoji:'📚💪',name:'건강한 학자',    desc:'몸도 챙기면서 지식도 쌓는 균형 잡힌 사람',     cond:(h,g,l)=>h>=30&&g>=30&&l<30,   condText:'건강 30+ & 성장력 30+'},
+  {id:'clean_life',     emoji:'🏠⚡',name:'생활의 달인',    desc:'환경을 정돈하고 건강까지 챙기는 고수',          cond:(h,g,l)=>h>=30&&l>=30&&g<30,   condText:'건강 30+ & 생활력 30+'},
+  {id:'wise_life',      emoji:'🎓🌿',name:'현명한 생활인',  desc:'공부와 생활 루틴이 완벽하게 자리잡은 사람',     cond:(h,g,l)=>g>=30&&l>=30&&h<30,   condText:'성장력 30+ & 생활력 30+'},
+  {id:'ironman',        emoji:'🦾',  name:'철의 의지',      desc:'건강 루틴만큼은 누구보다 강인한 의지',          cond:(h,g,l)=>h>=100&&g<60&&l<60,   condText:'건강 100+ (독보적)'},
+  {id:'philosopher',    emoji:'🧠',  name:'철학자',         desc:'자기 성찰과 지식 추구에 모든 것을 쏟는 탐구자', cond:(h,g,l)=>g>=100&&h<60&&l<60,   condText:'성장력 100+ (독보적)'},
+  {id:'minimalist',     emoji:'🌊',  name:'미니멀리스트',   desc:'정갈한 일상에서 평화를 찾는 생활 예술가',       cond:(h,g,l)=>l>=100&&h<60&&g<60,   condText:'생활력 100+ (독보적)'},
+  {id:'all_rounder',    emoji:'⚔️', name:'만능인',         desc:'셋 다 균형 있게 키운 진정한 강자',              cond:(h,g,l)=>h>=60&&g>=60&&l>=60,  condText:'건강·성장·생활 모두 60+'},
+  {id:'legend',         emoji:'👑',  name:'전설',           desc:'모든 스탯을 극한까지 끌어올린 루틴계의 전설',   cond:(h,g,l)=>h>=150&&g>=150&&l>=150,condText:'모든 스탯 150+'},
+];
+
+const CAT_COLOR = {health:'var(--health)',growth:'var(--growth)',life:'var(--life)'};
+const CAT_LABEL = {health:'건강',growth:'자기개발',life:'생활습관'};
+const CAT_ICON  = {health:'❤️',growth:'🧠',life:'🌿'};
+
+const DEFAULT_ROUTINES = [
+  {id:'r1', name:'영양제 먹기',        category:'health', freq:'daily',   group:''},
+  {id:'r2', name:'운동하기',           category:'health', freq:'weekly3', group:''},
+  {id:'r3', name:'간식·음료·우유 금지',category:'health', freq:'daily',   group:''},
+  {id:'r4', name:'밀가루 금지',         category:'health', freq:'daily',   group:''},
+  {id:'r5', name:'독서 1페이지',        category:'growth', freq:'daily',   group:''},
+  {id:'r6', name:'글쓰기',             category:'growth', freq:'daily',   group:''},
+  {id:'r7', name:'목표 확인하기',       category:'growth', freq:'daily',   group:''},
+  {id:'r8', name:'주가 확인하기',       category:'growth', freq:'daily',   group:''},
+  {id:'r9', name:'눕기 전 씻기',        category:'life',   freq:'daily',   group:'night'},
+  {id:'r10',name:'방 정리하기',         category:'life',   freq:'daily',   group:''},
+  {id:'r11',name:'괄사하기',            category:'health', freq:'daily',   group:'night'},
+  {id:'r12',name:'스마트워치 차기',      category:'health', freq:'daily',   group:'night'},
+  {id:'r13',name:'명상하기',            category:'health', freq:'daily',   group:'night'},
+  {id:'r14',name:'11시 취침',           category:'health', freq:'daily',   group:'night'},
+  {id:'r15',name:'7시간 이상 수면',     category:'health', freq:'daily',   group:'night'},
+];
+
+// ── RANDOM REWARD TABLE ───────────────────────────
+// 체크할 때마다 이 테이블에서 랜덤 추첨
+const REWARD_TABLE = [
+  {pts:1,  label:'+1',         emoji:'',   type:'normal',  weight:55},
+  {pts:2,  label:'+2',         emoji:'',   type:'normal',  weight:25},
+  {pts:3,  label:'+3 ✨',      emoji:'',   type:'lucky',   weight:10},
+  {pts:5,  label:'+5 🔥',      emoji:'',   type:'great',   weight:7},
+  {pts:10, label:'+10 💥',     emoji:'',   type:'jackpot', weight:2},
+  {pts:20, label:'+20 🌈',     emoji:'',   type:'jackpot', weight:1},
+];
+const TOTAL_WEIGHT = REWARD_TABLE.reduce((s,r)=>s+r.weight,0);
+
+// 오늘의 이벤트 (날짜 기반 랜덤, 하루 고정)
+const EVENTS = [
+  {id:'double', label:'🌟 황금 데이', desc:'오늘은 모든 보상 2배!',  color:'#3d3200', borderColor:'var(--gold)',    mult:2},
+  {id:'triple', label:'💎 레전드 데이',desc:'오늘은 모든 보상 3배!', color:'#1f0e3d', borderColor:'#a78bfa',       mult:3},
+  {id:'mystery',label:'🎲 럭키 데이', desc:'오늘은 보상이 예측불가!',color:'#0e3d2a', borderColor:'var(--life)',   mult:1},
+  {id:'normal', label:null, desc:null, color:null, borderColor:null, mult:1},
+  {id:'normal', label:null, desc:null, color:null, borderColor:null, mult:1},
+  {id:'normal', label:null, desc:null, color:null, borderColor:null, mult:1},
+  {id:'normal', label:null, desc:null, color:null, borderColor:null, mult:1},
+];
+
+// ── STATE ─────────────────────────────────────────
+let state = {
+  routines: [],
+  challenges: [],
+  logs: {},
+  challengeLogs: {},
+  character: {
+    name: '내 캐릭터',
+    stats: {health:0, growth:0, life:0},
+    unlockedTitles: ['beginner'],
+  },
+  mysteryRoutineId: null,  // 오늘의 황금 루틴
+  mysteryDate: null,
+  shownMilestones: {},     // { 'YYYY-MM-DD_50': true }
+};
+
+let calViewDate = new Date();
+let bundleStates = {};
+let comboCount = 0, comboTimer = null;
+
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ── STORAGE ───────────────────────────────────────
+function save() { localStorage.setItem('routine_rpg_v4', JSON.stringify(state)); }
+function load() {
+  const raw = localStorage.getItem('routine_rpg_v4');
+  if (raw) { try { const s=JSON.parse(raw); state={...state,...s}; } catch(e){} }
+  else { state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES)); }
+  if (!state.shownMilestones) state.shownMilestones = {};
+}
+
+// ── TODAY'S EVENT (date-seeded) ───────────────────
+function getTodayEvent() {
+  const t = today();
+  let h = 0;
+  for (let i=0;i<t.length;i++) h = (h*31+t.charCodeAt(i))&0xfffffff;
+  return EVENTS[Math.abs(h) % EVENTS.length];
+}
+
+// ── TODAY'S MYSTERY ROUTINE (date-seeded) ─────────
+function getMysteryRoutineId() {
+  const t = today();
+  if (state.mysteryDate === t && state.mysteryRoutineId) return state.mysteryRoutineId;
+  const active = state.routines.filter(r=>r.active!==false);
+  if (!active.length) return null;
+  let h = 0;
+  for (let i=0;i<t.length;i++) h=(h*37+t.charCodeAt(i)+7)&0xfffffff;
+  const id = active[Math.abs(h) % active.length].id;
+  state.mysteryRoutineId = id;
+  state.mysteryDate = t;
+  save();
+  return id;
+}
+
+// ── RANDOM REWARD ROLL ────────────────────────────
+function rollReward(event) {
+  let r = Math.random() * TOTAL_WEIGHT, cumul = 0;
+  let picked = REWARD_TABLE[0];
+  for (const row of REWARD_TABLE) {
+    cumul += row.weight;
+    if (r <= cumul) { picked = row; break; }
+  }
+  // mystery day: occasionally reroll for bigger
+  if (event.id === 'mystery' && Math.random() < 0.3) {
+    const bigPool = REWARD_TABLE.filter(x=>x.pts>=5);
+    picked = bigPool[Math.floor(Math.random()*bigPool.length)];
+  }
+  let pts = picked.pts * event.mult;
+  return { pts, label: pts === picked.pts ? picked.label : `+${pts} ${event.mult>1?'×'+event.mult:''}`, type: picked.type };
+}
+
+// ── SCREENS ───────────────────────────────────────
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name==='today')   renderToday();
+  if (name==='char')    renderChar();
+  if (name==='records') renderRecords();
+  if (name==='manage')  renderManage();
+}
+
+// ── TODAY ─────────────────────────────────────────
+function renderToday() {
+  const t = today();
+  const d = new Date();
+  const days=['일','월','화','수','목','금','토'];
+  document.getElementById('today-date').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+  const h=d.getHours();
+  document.getElementById('today-greeting').textContent=
+    h<12?'좋은 아침이에요! 오늘 뭐가 나올지 모르지 않아요? 🎲':
+    h<18?'잘 하고 있어요! 계속 달려봐요 🔥':
+         '오늘 하루 수고했어요 🌙 마무리 잘 해봐요';
+
+  if (!state.logs[t]) state.logs[t]={};
+  const log=state.logs[t];
+  const activeR=state.routines.filter(r=>r.active!==false);
+  const done=activeR.filter(r=>log[r.id]).length;
+  const total=activeR.length;
+  const pct=total?Math.round(done/total*100):0;
+
+  document.getElementById('ring-pct').textContent=pct+'%';
+  document.getElementById('today-done-count').textContent=`${done} / ${total} 완료`;
+  document.getElementById('ring-fg').style.strokeDashoffset=201-(201*pct/100);
+
+  const s=state.character.stats;
+  const title=getCurrentTitle(s.health,s.growth,s.life);
+  document.getElementById('char-display-name').textContent=state.character.name;
+  document.getElementById('today-char-title').textContent=title.emoji+' '+title.name;
+
+  // Event banner
+  const ev=getTodayEvent();
+  const banner=document.getElementById('event-banner-wrap');
+  if (ev.label) {
+    banner.innerHTML=`<div class="event-banner" style="background:${ev.color};border-color:${ev.borderColor};margin-bottom:16px">
+      <div class="event-icon">🎲</div>
+      <div class="event-text">
+        <h4 style="color:${ev.borderColor}">${ev.label}</h4>
+        <p style="color:var(--text-dim)">${ev.desc}</p>
+      </div>
+    </div>`;
+  } else {
+    banner.innerHTML='';
+  }
+
+  // Mystery routine
+  const mysteryId=getMysteryRoutineId();
+
+  // Groups
+  const groups={morning:[],night:[],none:[]};
+  activeR.forEach(r=>{
+    const g=r.group||'';
+    if(g==='night') groups.night.push(r);
+    else if(g==='morning') groups.morning.push(r);
+    else groups.none.push(r);
+  });
+  const cats={health:[],growth:[],life:[]};
+  groups.none.forEach(r=>cats[r.category].push(r));
+
+  let html='';
+  const activeChal=state.challenges.filter(c=>isChallengeActive(c));
+  if (activeChal.length) {
+    html+=`<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--gold)">⚡ 진행 중 챌린지</div>`;
+    activeChal.forEach(c=>{
+      const cl=state.challengeLogs[c.id]||{};
+      const dc=Object.values(cl).filter(Boolean).length;
+      const td=cl[t]; const p2=Math.round(dc/c.duration*100); const el=getDaysElapsed(c.startDate);
+      html+=`<div class="challenge-card">
+        <div class="challenge-card-header"><h4>⚡ ${c.name}</h4>
+          <button class="challenge-done-btn" onclick="toggleChallenge('${c.id}')">${td?'✓ 완료':'오늘 완료'}</button>
+        </div>
+        <div class="challenge-bar"><div class="challenge-bar-fill" style="width:${p2}%"></div></div>
+        <div class="challenge-info"><span>${dc}/${c.duration}일</span><span>${c.duration-el}일 남음</span></div>
+      </div>`;
+    });
+    html+='</div>';
+  }
+
+  ['health','growth','life'].forEach(cat=>{
+    if (!cats[cat].length) return;
+    const cd=cats[cat].filter(r=>log[r.id]).length;
+    html+=`<div class="cat-section"><div class="cat-header">
+      <div class="cat-dot" style="background:${CAT_COLOR[cat]}"></div>
+      <h3>${CAT_ICON[cat]} ${CAT_LABEL[cat]}</h3>
+      <span class="cat-count">${cd}/${cats[cat].length}</span>
+    </div>`;
+    cats[cat].forEach(r=>{html+=routineCardHTML(r,log[r.id],r.id===mysteryId);});
+    html+='</div>';
+  });
+  if (groups.morning.length) html+=bundleHTML('🌅','모닝 루틴','morning',groups.morning,log,mysteryId);
+  if (groups.night.length)   html+=bundleHTML('🌙','나이트 루틴','night',groups.night,log,mysteryId);
+
+  document.getElementById('routine-list').innerHTML=html;
+  Object.entries(bundleStates).forEach(([g,c])=>{
+    const el=document.getElementById('bundle-body-'+g);
+    if(el&&c) el.classList.add('collapsed');
+  });
+}
+
+function routineCardHTML(r, done, isMystery) {
+  const weekCount=r.freq==='weekly3'?getWeekCountById(r.id):null;
+  const subText=r.freq==='weekly3'?`이번 주 ${weekCount}/3회`:'';
+  const freqLabel=r.freq==='weekly3'?'주 3회':r.freq==='weekly'?'주 1회':'';
+  return `<div class="routine-card ${done?'done':''} ${isMystery&&!done?'mystery':''}" onclick="toggleRoutine('${r.id}',event)">
+    ${isMystery&&!done?'<div class="mystery-badge">🎲 보너스?</div>':''}
+    <div class="check-circle">${done?'✓':''}</div>
+    <div class="routine-info">
+      <div class="routine-name">${r.name}</div>
+      ${subText?`<div class="routine-sub">${subText}</div>`:''}
+    </div>
+    ${freqLabel?`<span class="routine-badge" style="background:${CAT_COLOR[r.category]}22;color:${CAT_COLOR[r.category]}">${freqLabel}</span>`:''}
+  </div>`;
+}
+
+function bundleHTML(icon,title,group,routines,log,mysteryId) {
+  const done=routines.filter(r=>log[r.id]).length;
+  return `<div class="bundle-wrap">
+    <div class="bundle-header" onclick="toggleBundle('${group}')">
+      <span>${icon}</span><span class="bundle-title">${title}</span>
+      <span class="bundle-prog">${done}/${routines.length}</span>
+    </div>
+    <div class="bundle-body" id="bundle-body-${group}">
+      ${routines.map(r=>routineCardHTML(r,log[r.id],r.id===mysteryId)).join('')}
+    </div>
+  </div>`;
+}
+
+function toggleBundle(group) {
+  const el=document.getElementById('bundle-body-'+group); if(!el) return;
+  el.classList.toggle('collapsed');
+  bundleStates[group]=el.classList.contains('collapsed');
+}
+
+function getWeekCountById(routineId) {
+  const d=new Date(),dow=d.getDay(),mon=new Date(d);
+  mon.setDate(d.getDate()-(dow===0?6:dow-1));
+  let c=0;
+  for(let i=0;i<7;i++){
+    const dd=new Date(mon);dd.setDate(mon.getDate()+i);
+    const k=`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
+    if(state.logs[k]?.[routineId]) c++;
+  }
+  return c;
+}
+
+// ── TOGGLE ROUTINE (핵심: 랜덤 보상) ─────────────
+function toggleRoutine(id, ev) {
+  const t=today();
+  if(!state.logs[t]) state.logs[t]={};
+  const wasDone=state.logs[t][id];
+  state.logs[t][id]=!wasDone;
+
+  const r=state.routines.find(x=>x.id===id);
+  if(!r) { save(); renderToday(); return; }
+
+  if (!wasDone) {
+    // 체크 ON → 랜덤 보상
+    const event=getTodayEvent();
+    const isMystery=id===getMysteryRoutineId();
+    let reward=rollReward(event);
+
+    // 황금 루틴이면 추가 배율
+    if (isMystery) {
+      reward.pts = reward.pts * 2;
+      reward.label = `+${reward.pts} 🎲 보너스!`;
+      reward.type = reward.pts >= 20 ? 'jackpot' : 'great';
+    }
+
+    const prev=state.character.stats[r.category]||0;
+    state.character.stats[r.category]=prev+reward.pts;
+    checkRankUp(r.category, prev, state.character.stats[r.category]);
+    checkTitleUnlock();
+
+    // 잭팟?
+    if (reward.type==='jackpot') {
+      spawnParticles(ev);
+      setTimeout(()=>showJackpot(reward, r.category), 200);
+    } else {
+      // floating reward text
+      spawnFloatingReward(ev, reward.label, reward.type);
+      if (reward.type==='great') spawnParticles(ev, 8);
+    }
+
+    // 콤보
+    handleCombo();
+    // 마일스톤 체크
+    setTimeout(()=>checkMilestone(), 100);
+
+  } else {
+    // 체크 해제 → 1pt 감소
+    state.character.stats[r.category]=Math.max(0,(state.character.stats[r.category]||0)-1);
+    comboCount=0;
+  }
+
+  save();
+  renderToday();
+}
+
+function handleCombo() {
+  comboCount++;
+  clearTimeout(comboTimer);
+  if (comboCount >= 3) {
+    showCombo(comboCount);
+  }
+  comboTimer=setTimeout(()=>{ comboCount=0; }, 6000);
+}
+
+function showCombo(n) {
+  const existing=document.querySelector('.combo-display');
+  if (existing) existing.remove();
+  const div=document.createElement('div');
+  div.className='combo-display';
+  const msgs=['','','','3연속 콤보! 🔥','4연속! 🔥🔥','5연속! 💥','6연속!! 💥💥','7연속!!! 🌈','무한 콤보! 👑'];
+  const msg=msgs[Math.min(n,msgs.length-1)]||`${n}연속 콤보! 🌈`;
+  div.innerHTML=`<div class="combo-text">${msg}</div><div class="combo-sub">대단해요!</div>`;
+  document.body.appendChild(div);
+  setTimeout(()=>div.remove(),1800);
+}
+
+// ── FLOATING REWARD NUMBER ────────────────────────
+function spawnFloatingReward(ev, label, type) {
+  const colors={normal:'#e8e8f0',lucky:'#ffd700',great:'#ff9500',jackpot:'#ff4466'};
+  const el=document.createElement('div');
+  el.className='float-reward';
+  el.textContent=label;
+  el.style.color=colors[type]||'#e8e8f0';
+  el.style.left=(window.innerWidth/2-40+Math.random()*80)+'px';
+  el.style.top=(window.innerHeight/2)+'px';
+  if(type==='great') el.style.fontSize='28px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1200);
+}
+
+// ── PARTICLES ─────────────────────────────────────
+function spawnParticles(ev, count=15) {
+  const colors=['#ffd700','#ff6b6b','#6c63ff','#43e97b','#ff9500','#a78bfa'];
+  const cx=window.innerWidth/2, cy=window.innerHeight/2;
+  for(let i=0;i<count;i++){
+    const el=document.createElement('div');
+    el.className='particle';
+    const size=Math.random()*10+6;
+    const angle=Math.random()*Math.PI*2;
+    const dist=Math.random()*180+60;
+    const dur=(Math.random()*0.5+0.6).toFixed(2)+'s';
+    el.style.cssText=`
+      width:${size}px;height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      left:${cx}px;top:${cy}px;
+      --dx:${(Math.cos(angle)*dist).toFixed(0)}px;
+      --dy:${(Math.sin(angle)*dist).toFixed(0)}px;
+      --dur:${dur};
+    `;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), parseFloat(dur)*1000+100);
+  }
+}
+
+// ── JACKPOT ───────────────────────────────────────
+const SLOT_EMOJIS=['🍒','🍋','🍇','🔔','⭐','💎','🎰','🌈','🎊'];
+function showJackpot(reward, cat) {
+  const pick=()=>SLOT_EMOJIS[Math.floor(Math.random()*SLOT_EMOJIS.length)];
+  const el=document.getElementById('jackpot-slots');
+  let ticks=0;
+  const iv=setInterval(()=>{
+    el.textContent=pick()+pick()+pick();
+    ticks++;
+    if(ticks>12){
+      clearInterval(iv);
+      el.textContent='💎💎💎';
+    }
+  },80);
+  document.getElementById('jackpot-reward').textContent=`${CAT_LABEL[cat]} +${reward.pts} 획득!`;
+  document.getElementById('jackpot-overlay').classList.add('open');
+  spawnParticles(null,30);
+}
+function closeJackpot(){document.getElementById('jackpot-overlay').classList.remove('open');}
+
+// ── MILESTONE ─────────────────────────────────────
+function checkMilestone() {
+  const t=today();
+  const activeR=state.routines.filter(r=>r.active!==false);
+  if(!activeR.length) return;
+  const log=state.logs[t]||{};
+  const done=activeR.filter(r=>log[r.id]).length;
+  const pct=done/activeR.length;
+
+  const milestones=[
+    {key:'50',pct:0.5, emoji:'⚡',title:'절반 달성!',    sub:'오늘의 루틴 절반을 완료했어요'},
+    {key:'80',pct:0.8, emoji:'🔥',title:'거의 다 왔어!', sub:'80% 돌파! 조금만 더!'},
+    {key:'100',pct:1.0,emoji:'👑',title:'완벽한 하루!',  sub:'오늘 모든 루틴을 완료했어요 🎉'},
+  ];
+
+  for(const m of milestones){
+    const mkey=t+'_'+m.key;
+    if(pct>=m.pct && !state.shownMilestones[mkey]){
+      state.shownMilestones[mkey]=true;
+      save();
+      if(m.key==='100') spawnParticles(null,25);
+      setTimeout(()=>{
+        document.getElementById('milestone-emoji').textContent=m.emoji;
+        document.getElementById('milestone-title').textContent=m.title;
+        document.getElementById('milestone-sub').textContent=m.sub;
+        document.getElementById('milestone-overlay').classList.add('open');
+      },400);
+      break;
+    }
+  }
+}
+function closeMilestone(){document.getElementById('milestone-overlay').classList.remove('open');}
+
+// ── CHALLENGE ─────────────────────────────────────
+function toggleChallenge(id){
+  const t=today();
+  if(!state.challengeLogs[id]) state.challengeLogs[id]={};
+  const w=state.challengeLogs[id][t];
+  state.challengeLogs[id][t]=!w;
+  if(!w){
+    const ev=getTodayEvent();
+    spawnFloatingReward(ev,'⚡ 챌린지!','lucky');
+  }
+  save(); renderToday();
+}
+
+// ── STAT / RANK / TITLE ───────────────────────────
+function getRank(table,pts){
+  let r=table[0];
+  for(const x of table){if(pts>=x.pts)r=x;else break;}
+  return r;
+}
+function getNextRank(table,pts){
+  for(const r of table){if(pts<r.pts)return r;}
+  return null;
+}
+function getCurrentTitle(h,g,l){
+  let m=COMBINED_TITLES[0];
+  for(const t of COMBINED_TITLES){if(t.cond(h,g,l))m=t;}
+  return m;
+}
+function checkRankUp(cat,prev,next){
+  const table=cat==='health'?HEALTH_RANKS:cat==='growth'?GROWTH_RANKS:LIFE_RANKS;
+  const pr=getRank(table,prev),nr=getRank(table,next);
+  if(nr.pts>pr.pts){
+    const col=`var(--${cat})`;
+    setTimeout(()=>showRankup(CAT_LABEL[cat],nr.emoji,nr.name,nr.name+'가 됐어요!',col),800);
+  }
+}
+function checkTitleUnlock(){
+  const {health,growth,life}=state.character.stats;
+  COMBINED_TITLES.forEach(t=>{
+    if(t.cond(health,growth,life)&&!state.character.unlockedTitles.includes(t.id)){
+      state.character.unlockedTitles.push(t.id);
+      setTimeout(()=>showToast('🎊 새 칭호 해금: '+t.name),2000);
+    }
+  });
+}
+
+// ── CHARACTER ─────────────────────────────────────
+function renderChar(){
+  const {health,growth,life}=state.character.stats;
+  const title=getCurrentTitle(health,growth,life);
+  document.getElementById('char-avatar').textContent=[...title.emoji].find(c=>/\p{Emoji}/u.test(c))||'🧙';
+  document.getElementById('char-main-title').textContent=title.name;
+  document.getElementById('char-sub-desc').textContent=title.desc;
+
+  const sd=[
+    {key:'health',label:'건강',   table:HEALTH_RANKS,pts:health,cls:'health'},
+    {key:'growth',label:'자기개발',table:GROWTH_RANKS,pts:growth,cls:'growth'},
+    {key:'life',  label:'생활습관',table:LIFE_RANKS,  pts:life,  cls:'life'},
+  ];
+  document.getElementById('stat-ranks').innerHTML=sd.map(s=>{
+    const rk=getRank(s.table,s.pts),nx=getNextRank(s.table,s.pts);
+    const barPct=nx?Math.round((s.pts-rk.pts)/(nx.pts-rk.pts)*100):100;
+    return `<div class="rank-card ${s.cls}">
+      <div class="rank-icon">${rk.emoji}</div>
+      <div class="rank-cat">${s.label}</div>
+      <div class="rank-name">${rk.name}</div>
+      <div class="rank-pts">${s.pts}</div>
+      <div class="rank-bar"><div class="rank-bar-fill" style="width:${barPct}%;background:var(--${s.cls})"></div></div>
+      <div class="rank-next">${nx?`다음: ${nx.name} (${nx.pts-s.pts}pts)`:'최고 등급!'}</div>
+    </div>`;
+  }).join('');
+
+  const now=new Date(),mk=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  let td=0,pd=0,dr=0;
+  const ar=state.routines.filter(r=>r.active!==false);
+  Object.entries(state.logs).forEach(([date,log])=>{
+    if(!date.startsWith(mk))return; dr++;
+    const dd=ar.filter(r=>log[r.id]).length; td+=dd;
+    if(ar.length&&dd===ar.length)pd++;
+  });
+  const avg=(dr&&ar.length)?Math.round(td/(dr*ar.length)*100):0;
+  document.getElementById('month-rate').textContent=avg+'%';
+  document.getElementById('month-total').textContent=td;
+  document.getElementById('month-perfect').textContent=pd;
+
+  document.getElementById('title-grid').innerHTML=COMBINED_TITLES.map(t=>{
+    const ul=state.character.unlockedTitles.includes(t.id);
+    const ic=t.id===title.id;
+    return `<div class="title-item ${ul?'unlocked':''} ${ic?'current':''}">
+      <span class="title-emoji">${t.emoji}</span>
+      <div class="title-info"><div class="title-name">${t.name}</div><div class="title-cond">${t.condText}</div></div>
+      ${ic?'<span style="font-size:11px;color:var(--gold);font-weight:700">현재</span>':''}
+      ${!ul?'<span style="font-size:12px;color:var(--text-dim)">🔒</span>':''}
+    </div>`;
+  }).join('');
+}
+
+// ── RECORDS ───────────────────────────────────────
+function renderRecords(){
+  document.getElementById('streak-cur').textContent=getCurrentStreak();
+  document.getElementById('streak-best').textContent=getBestStreak();
+  renderCalendar(); renderBreakdown();
+}
+function getCurrentStreak(){
+  const ar=state.routines.filter(r=>r.active!==false); if(!ar.length)return 0;
+  let s=0; const d=new Date();
+  while(true){
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const log=state.logs[k]||{};
+    const done=ar.filter(r=>log[r.id]).length;
+    if(done===0&&k<today())break;
+    if(done>0)s++;else break;
+    d.setDate(d.getDate()-1);
+  }
+  return s;
+}
+function getBestStreak(){
+  const ar=state.routines.filter(r=>r.active!==false); if(!ar.length)return 0;
+  let best=0,cur=0;
+  Object.keys(state.logs).sort().forEach(k=>{
+    if(ar.filter(r=>state.logs[k][r.id]).length>0){cur++;best=Math.max(best,cur);}else cur=0;
+  });
+  return best;
+}
+function renderCalendar(){
+  const y=calViewDate.getFullYear(),m=calViewDate.getMonth();
+  const mn=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('cal-month-label').textContent=`${y}년 ${mn[m]}`;
+  const fd=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),t=today();
+  const ar=state.routines.filter(r=>r.active!==false);
+  let html=['일','월','화','수','목','금','토'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+  for(let i=0;i<fd;i++)html+=`<div class="cal-day empty"></div>`;
+  for(let day=1;day<=dim;day++){
+    const k=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const iF=k>t,log=state.logs[k]||{};
+    let cls='cal-day',cnt=day;
+    if(iF){cls+=' future';}
+    else if(ar.length){
+      const pct=ar.filter(r=>log[r.id]).length/ar.length;
+      if(pct>=0.8){cls+=' full';cnt='✓';}
+      else if(pct>=0.4)cls+=' partial';
+      else cls+=' none';
+    }
+    if(k===t)cls+=' today';
+    html+=`<div class="${cls}">${cnt}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+}
+function calPrev(){calViewDate.setMonth(calViewDate.getMonth()-1);renderCalendar();}
+function calNext(){
+  const n=new Date();
+  if(calViewDate.getFullYear()===n.getFullYear()&&calViewDate.getMonth()===n.getMonth())return;
+  calViewDate.setMonth(calViewDate.getMonth()+1);renderCalendar();
+}
+function renderBreakdown(){
+  const n=new Date(),mk=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;
+  const c={health:{d:0,t:0},growth:{d:0,t:0},life:{d:0,t:0}};
+  Object.entries(state.logs).forEach(([date,log])=>{
+    if(!date.startsWith(mk))return;
+    state.routines.filter(r=>r.active!==false).forEach(r=>{c[r.category].t++;if(log[r.id])c[r.category].d++;});
+  });
+  document.getElementById('breakdown-list').innerHTML=Object.entries(c).map(([k,v])=>{
+    const p=v.t?Math.round(v.d/v.t*100):0;
+    return `<div class="breakdown-item">
+      <div class="breakdown-label"><span>${CAT_ICON[k]} ${CAT_LABEL[k]}</span><span style="color:${CAT_COLOR[k]}">${p}%</span></div>
+      <div class="breakdown-bar"><div class="breakdown-fill" style="width:${p}%;background:${CAT_COLOR[k]}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── MANAGE ────────────────────────────────────────
+function renderManage(){
+  const a=state.routines.filter(r=>r.active!==false),na=state.routines.filter(r=>r.active===false);
+  let html=a.map(routineManageCard).join('');
+  if(na.length){html+=`<div style="font-size:12px;color:var(--text-dim);margin:12px 0 8px">비활성화된 루틴</div>`;html+=na.map(routineManageCard).join('');}
+  document.getElementById('manage-list').innerHTML=html||'<div class="empty-state">루틴이 없어요</div>';
+  const aC=state.challenges.filter(c=>isChallengeActive(c)),eC=state.challenges.filter(c=>!isChallengeActive(c));
+  let ch=aC.map(c=>challengeManageCard(c,true)).join('');
+  if(eC.length){ch+=`<div style="font-size:12px;color:var(--text-dim);margin:12px 0 8px">종료된 챌린지</div>`;ch+=eC.map(c=>challengeManageCard(c,false)).join('');}
+  document.getElementById('challenge-manage-list').innerHTML=ch||'<div class="empty-state">진행 중인 챌린지가 없어요</div>';
+}
+function routineManageCard(r){
+  const ia=r.active!==false;
+  return `<div class="routine-manage-card" style="opacity:${ia?1:0.5}">
+    <div class="manage-dot" style="background:${CAT_COLOR[r.category]}"></div>
+    <div class="manage-info">
+      <div class="manage-name">${r.name}</div>
+      <div class="manage-sub">${CAT_LABEL[r.category]} · ${r.freq==='daily'?'매일':r.freq==='weekly3'?'주 3회':'주 1회'}${r.group?' · '+(r.group==='night'?'🌙 나이트':'🌅 모닝'):''}</div>
+    </div>
+    <div class="manage-actions">
+      <button class="icon-btn" onclick="editRoutine('${r.id}')">✏️</button>
+      <button class="toggle-btn" onclick="toggleRoutineActive('${r.id}')">${ia?'🟢':'⭕'}</button>
+    </div>
+  </div>`;
+}
+function challengeManageCard(c,ia){
+  const cl=state.challengeLogs[c.id]||{},done=Object.values(cl).filter(Boolean).length;
+  return `<div class="challenge-manage-card" style="opacity:${ia?1:0.5}">
+    <div style="font-size:20px">⚡</div>
+    <div class="manage-info">
+      <div class="manage-name">${c.name}</div>
+      <div class="manage-sub">${done}/${c.duration}일 완료 · ${ia?getDaysElapsed(c.startDate)+'일째':'종료'}</div>
+    </div>
+    <div class="manage-actions"><button class="icon-btn" onclick="editChallenge('${c.id}')">✏️</button></div>
+  </div>`;
+}
+function toggleRoutineActive(id){
+  const r=state.routines.find(x=>x.id===id);
+  if(r)r.active=r.active===false?true:false;
+  save();renderManage();
+}
+
+// ── MODALS ────────────────────────────────────────
+let cCat='health',cFreq='daily',cGroup='';
+function openAddRoutine(){
+  document.getElementById('routine-modal-title').textContent='루틴 추가';
+  document.getElementById('edit-routine-id').value='';
+  document.getElementById('routine-name-input').value='';
+  document.getElementById('delete-routine-btn').style.display='none';
+  cCat='health';cFreq='daily';cGroup='';syncSelects();openModal('routine-modal');
+}
+function editRoutine(id){
+  const r=state.routines.find(x=>x.id===id);if(!r)return;
+  document.getElementById('routine-modal-title').textContent='루틴 수정';
+  document.getElementById('edit-routine-id').value=id;
+  document.getElementById('routine-name-input').value=r.name;
+  document.getElementById('delete-routine-btn').style.display='';
+  cCat=r.category;cFreq=r.freq;cGroup=r.group||'';syncSelects();openModal('routine-modal');
+}
+function syncSelects(){
+  ['cat-select','freq-select','group-select'].forEach(s=>document.querySelectorAll(`#${s} .select-btn`).forEach(b=>b.classList.remove('selected')));
+  document.querySelector(`#cat-select [data-val="${cCat}"]`)?.classList.add('selected');
+  document.querySelector(`#freq-select [data-val="${cFreq}"]`)?.classList.add('selected');
+  document.querySelector(`#group-select [data-val="${cGroup}"]`)?.classList.add('selected');
+}
+function selectCat(b){document.querySelectorAll('#cat-select .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cCat=b.dataset.val;}
+function selectFreq(b){document.querySelectorAll('#freq-select .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cFreq=b.dataset.val;}
+function selectGroup(b){document.querySelectorAll('#group-select .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cGroup=b.dataset.val;}
+function saveRoutine(){
+  const name=document.getElementById('routine-name-input').value.trim();
+  if(!name){showToast('이름을 입력해주세요');return;}
+  const eid=document.getElementById('edit-routine-id').value;
+  if(eid){const r=state.routines.find(x=>x.id===eid);if(r){r.name=name;r.category=cCat;r.freq=cFreq;r.group=cGroup;}}
+  else state.routines.push({id:'r'+Date.now(),name,category:cCat,freq:cFreq,group:cGroup,active:true});
+  save();closeModal('routine-modal');renderManage();renderToday();
+  showToast(eid?'루틴이 수정됐어요':'루틴이 추가됐어요 🎉');
+}
+function deleteCurrentRoutine(){
+  const id=document.getElementById('edit-routine-id').value;
+  if(!id||!confirm('이 루틴을 삭제할까요?'))return;
+  state.routines=state.routines.filter(r=>r.id!==id);
+  save();closeModal('routine-modal');renderManage();renderToday();showToast('루틴이 삭제됐어요');
+}
+
+let cDur=7;
+function openAddChallenge(){
+  document.getElementById('challenge-modal-title').textContent='챌린지 추가';
+  document.getElementById('edit-challenge-id').value='';
+  document.getElementById('challenge-name-input').value='';
+  document.getElementById('delete-challenge-btn').style.display='none';
+  cDur=7;document.querySelectorAll('#duration-select .select-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  openModal('challenge-modal');
+}
+function editChallenge(id){
+  const c=state.challenges.find(x=>x.id===id);if(!c)return;
+  document.getElementById('challenge-modal-title').textContent='챌린지 수정';
+  document.getElementById('edit-challenge-id').value=id;
+  document.getElementById('challenge-name-input').value=c.name;
+  document.getElementById('delete-challenge-btn').style.display='';
+  cDur=c.duration;document.querySelectorAll('#duration-select .select-btn').forEach(b=>b.classList.toggle('selected',parseInt(b.dataset.val)===cDur));
+  openModal('challenge-modal');
+}
+function selectDuration(b){document.querySelectorAll('#duration-select .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cDur=parseInt(b.dataset.val);}
+function saveChallenge(){
+  const name=document.getElementById('challenge-name-input').value.trim();
+  if(!name){showToast('이름을 입력해주세요');return;}
+  const eid=document.getElementById('edit-challenge-id').value;
+  if(eid){const c=state.challenges.find(x=>x.id===eid);if(c){c.name=name;c.duration=cDur;}}
+  else{const nid='c'+Date.now();state.challenges.push({id:nid,name,duration:cDur,startDate:today()});state.challengeLogs[nid]={};}
+  save();closeModal('challenge-modal');renderManage();renderToday();
+  showToast(eid?'챌린지가 수정됐어요':'챌린지가 시작됐어요! ⚡');
+}
+function deleteCurrentChallenge(){
+  const id=document.getElementById('edit-challenge-id').value;
+  if(!id||!confirm('챌린지를 삭제할까요?'))return;
+  state.challenges=state.challenges.filter(c=>c.id!==id);
+  save();closeModal('challenge-modal');renderManage();renderToday();showToast('챌린지가 삭제됐어요');
+}
+function isChallengeActive(c){const e=new Date(c.startDate);e.setDate(e.getDate()+c.duration);return new Date()<e;}
+function getDaysElapsed(s){return Math.floor((new Date()-new Date(s))/86400000);}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+let toastTimer;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2000);
+}
+function showRankup(catLabel,emoji,rankName,sub,color){
+  document.getElementById('rankup-emoji').textContent=emoji;
+  document.getElementById('rankup-cat').textContent=catLabel+' 등급 상승!';
+  document.getElementById('rankup-title').textContent=rankName;
+  document.getElementById('rankup-title').style.color=color;
+  document.getElementById('rankup-sub').textContent=sub;
+  document.getElementById('rankup-overlay').classList.add('open');
+}
+function closeRankup(){document.getElementById('rankup-overlay').classList.remove('open');}
+
+// ── INIT ──────────────────────────────────────────
+load();
+renderToday();
+</script>
+</body>
+</html>
