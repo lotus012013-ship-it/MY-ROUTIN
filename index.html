@@ -139,6 +139,27 @@
     100% { transform: translateY(-80px) scale(0.9); opacity: 0; }
   }
 
+  /* IDENTITY TOAST */
+  .identity-toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+    z-index: 450; pointer-events: none;
+    background: rgba(15,14,23,0.92); border: 1px solid rgba(108,99,255,0.5);
+    border-radius: 16px; padding: 14px 22px;
+    max-width: 320px; text-align: center;
+    opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease;
+    backdrop-filter: blur(8px);
+  }
+  .identity-toast.identity-show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+  .identity-toast.identity-hide {
+    opacity: 0; transform: translateX(-50%) translateY(-10px);
+  }
+  .identity-quote {
+    font-size: 14px; font-weight: 600; color: #a8a4ff;
+    line-height: 1.5; letter-spacing: -0.2px;
+  }
+
   /* COMBO */
   .combo-display {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
@@ -558,21 +579,21 @@ const CAT_LABEL = {health:'건강',growth:'자기개발',life:'생활습관'};
 const CAT_ICON  = {health:'❤️',growth:'🧠',life:'🌿'};
 
 const DEFAULT_ROUTINES = [
-  {id:'r1', name:'영양제 먹기',        category:'health', freq:'daily',   group:''},
-  {id:'r2', name:'운동하기',           category:'health', freq:'weekly3', group:''},
-  {id:'r3', name:'간식·음료·우유 금지',category:'health', freq:'daily',   group:''},
-  {id:'r4', name:'밀가루 금지',         category:'health', freq:'daily',   group:''},
-  {id:'r5', name:'독서 1페이지',        category:'growth', freq:'daily',   group:''},
-  {id:'r6', name:'글쓰기',             category:'growth', freq:'daily',   group:''},
-  {id:'r7', name:'목표 확인하기',       category:'growth', freq:'daily',   group:''},
-  {id:'r8', name:'주가 확인하기',       category:'growth', freq:'daily',   group:''},
-  {id:'r9', name:'눕기 전 씻기',        category:'life',   freq:'daily',   group:'night'},
-  {id:'r10',name:'방 정리하기',         category:'life',   freq:'daily',   group:''},
-  {id:'r11',name:'괄사하기',            category:'health', freq:'daily',   group:'night'},
-  {id:'r12',name:'스마트워치 차기',      category:'health', freq:'daily',   group:'night'},
-  {id:'r13',name:'명상하기',            category:'health', freq:'daily',   group:'night'},
-  {id:'r14',name:'11시 취침',           category:'health', freq:'daily',   group:'night'},
-  {id:'r15',name:'7시간 이상 수면',     category:'health', freq:'daily',   group:'night'},
+  {id:'r1', name:'영양제 먹기',        category:'health', freq:'daily',   group:'', identity:'나는 내 몸을 챙기는 사람이다'},
+  {id:'r2', name:'운동하기',           category:'health', freq:'weekly3', group:'', identity:'나는 내 몸을 다시 믿는 사람이다'},
+  {id:'r3', name:'간식·음료·우유 금지',category:'health', freq:'daily',   group:'', identity:'나는 내 욕구를 다스리는 사람이다'},
+  {id:'r4', name:'밀가루 금지',         category:'health', freq:'daily',   group:'', identity:'나는 내 몸에 진심인 사람이다'},
+  {id:'r5', name:'독서 1페이지',        category:'growth', freq:'daily',   group:'', identity:'나는 매일 조금씩 성장하는 사람이다'},
+  {id:'r6', name:'글쓰기',             category:'growth', freq:'daily',   group:'', identity:'나는 내 경험을 자산으로 만드는 사람이다'},
+  {id:'r7', name:'목표 확인하기',       category:'growth', freq:'daily',   group:'', identity:'나는 방향을 잃지 않는 사람이다'},
+  {id:'r8', name:'주가 확인하기',       category:'growth', freq:'daily',   group:'', identity:'나는 조용히 미래를 준비하는 사람이다'},
+  {id:'r9', name:'눕기 전 씻기',        category:'life',   freq:'daily',   group:'night', identity:'나는 나를 방치하지 않는 사람이다'},
+  {id:'r10',name:'방 정리하기',         category:'life',   freq:'daily',   group:'', identity:'나는 내 공간을 존중하는 사람이다'},
+  {id:'r11',name:'괄사하기',            category:'health', freq:'daily',   group:'night', identity:'나는 내 몸을 정성껏 돌보는 사람이다'},
+  {id:'r12',name:'스마트워치 차기',      category:'health', freq:'daily',   group:'night', identity:'나는 내 건강을 기록하는 사람이다'},
+  {id:'r13',name:'명상하기',            category:'health', freq:'daily',   group:'night', identity:'나는 내 멘탈을 회복시키는 사람이다'},
+  {id:'r14',name:'11시 취침',           category:'health', freq:'daily',   group:'night', identity:'나는 내일을 위해 오늘을 마무리하는 사람이다'},
+  {id:'r15',name:'7시간 이상 수면',     category:'health', freq:'daily',   group:'night', identity:'나는 회복을 두려워하지 않는 사람이다'},
 ];
 
 // ── RANDOM REWARD TABLE ───────────────────────────
@@ -630,6 +651,13 @@ function load() {
   if (raw) { try { const s=JSON.parse(raw); state={...state,...s}; } catch(e){} }
   else { state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES)); }
   if (!state.shownMilestones) state.shownMilestones = {};
+  // identity 필드 없는 기존 루틴에 자동 보충
+  state.routines.forEach(r => {
+    if (!r.identity) {
+      const def = DEFAULT_ROUTINES.find(d => d.id === r.id);
+      if (def && def.identity) r.identity = def.identity;
+    }
+  });
 }
 
 // ── TODAY'S EVENT (date-seeded) ───────────────────
@@ -865,6 +893,11 @@ function toggleRoutine(id, ev) {
       if (reward.type==='great') spawnParticles(ev, 8);
     }
 
+    // 정체성 문장
+    if (r.identity) {
+      setTimeout(()=>showIdentity(r.identity), reward.type==='jackpot' ? 2200 : 400);
+    }
+
     // 콤보
     handleCombo();
     // 마일스톤 체크
@@ -878,6 +911,20 @@ function toggleRoutine(id, ev) {
 
   save();
   renderToday();
+}
+
+function showIdentity(text) {
+  const existing = document.querySelector('.identity-toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = 'identity-toast';
+  el.innerHTML = `<span class="identity-quote">"${text}"</span>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{ el.classList.add('identity-show'); });
+  setTimeout(()=>{
+    el.classList.add('identity-hide');
+    setTimeout(()=>el.remove(), 600);
+  }, 2800);
 }
 
 function handleCombo() {
