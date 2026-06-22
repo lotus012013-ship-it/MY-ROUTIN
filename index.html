@@ -248,7 +248,8 @@
     padding:28px 20px 24px; margin-bottom:20px; text-align:center; position:relative; overflow:hidden;
   }
   .char-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,0.08) 0%,transparent 70%); }
-  .char-avatar-big { font-size:72px; margin-bottom:10px; line-height:1; }
+  .char-avatar-big { width:120px; height:auto; margin:0 auto 10px; display:block; font-size:0; line-height:0; }
+  .char-age-badge { display:inline-block; font-size:11px; color:var(--text-dim); background:var(--surface2); border-radius:20px; padding:3px 12px; margin-bottom:8px; }
   .char-main-title { font-size:22px; font-weight:800; color:var(--gold); text-shadow:0 0 20px rgba(255,215,0,0.4); margin-bottom:6px; }
   .char-sub-desc { font-size:13px; color:var(--text-dim); line-height:1.6; max-width:260px; margin:0 auto; }
 
@@ -444,7 +445,7 @@
   /* MODAL */
   .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end; justify-content:center; }
   .modal-overlay.open { display:flex; }
-  .modal { background:var(--surface); border-radius:24px 24px 0 0; padding:24px; width:100%; max-width:430px; max-height:85vh; overflow-y:auto; }
+  .modal { background:var(--surface); border-radius:24px 24px 0 0; padding:24px; width:100%; max-width:430px; max-height:92vh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:max(24px,env(safe-area-inset-bottom)); }
   .modal h3 { font-size:18px; font-weight:700; margin-bottom:20px; }
   .form-group { margin-bottom:16px; }
   .form-group label { font-size:13px; color:var(--text-dim); display:block; margin-bottom:8px; }
@@ -507,7 +508,6 @@
 <div id="screen-char" class="screen">
   <div class="header"><h1>캐릭터</h1><p>루틴마다 다른 스탯이 자라요</p></div>
   <div class="char-hero">
-    <div class="char-avatar-big" id="char-avatar">🧙</div>
     <div class="char-main-title" id="char-main-title">칭호</div>
     <div class="char-sub-desc" id="char-sub-desc"></div>
   </div>
@@ -534,11 +534,11 @@
     </div>
     <div class="cal-grid" id="cal-grid"></div>
   </div>
-  <div class="month-report-card" id="month-report-card"></div>
   <div class="cat-breakdown">
     <h3>카테고리별 달성률</h3>
     <div id="breakdown-list"></div>
   </div>
+  <div class="month-report-card" id="month-report-card"></div>
   <div class="cat-breakdown" style="margin-top:16px">
     <h3 id="fail-analysis-header">📊 실패 분석</h3>
     <div id="fail-analysis"></div>
@@ -578,21 +578,26 @@
     <h3 id="routine-modal-title">루틴 추가</h3>
     <input type="hidden" id="edit-routine-id">
     <div class="form-group"><label>루틴 이름</label><input type="text" id="routine-name-input" placeholder="예: 영양제 먹기"></div>
+    <div class="form-group"><label>그룹 (선택)</label>
+      <div class="select-group" id="group-select">
+        <button class="select-btn selected" data-val="" onclick="selectGroup(this)">없음</button>
+        <button class="select-btn" data-val="morning" onclick="selectGroup(this)">🌅 모닝</button>
+        <button class="select-btn" data-val="night" onclick="selectGroup(this)">🌙 나이트</button>
+      </div>
+    </div>
     <div class="form-group"><label>카테고리</label>
       <div class="select-group" id="cat-select"></div>
     </div>
     <div class="form-group"><label>주기</label>
       <div class="select-group" id="freq-select">
         <button class="select-btn selected" data-val="daily" onclick="selectFreq(this)">매일</button>
+        <button class="select-btn" data-val="weekly6" onclick="selectFreq(this)">주 6회</button>
+        <button class="select-btn" data-val="weekly5" onclick="selectFreq(this)">주 5회</button>
+        <button class="select-btn" data-val="weekly4" onclick="selectFreq(this)">주 4회</button>
         <button class="select-btn" data-val="weekly3" onclick="selectFreq(this)">주 3회</button>
+        <button class="select-btn" data-val="weekly2" onclick="selectFreq(this)">주 2회</button>
         <button class="select-btn" data-val="weekly" onclick="selectFreq(this)">주 1회</button>
-      </div>
-    </div>
-    <div class="form-group"><label>그룹 (선택)</label>
-      <div class="select-group" id="group-select">
-        <button class="select-btn selected" data-val="" onclick="selectGroup(this)">없음</button>
-        <button class="select-btn" data-val="night" onclick="selectGroup(this)">🌙 나이트 루틴</button>
-        <button class="select-btn" data-val="morning" onclick="selectGroup(this)">🌅 모닝 루틴</button>
+        <button class="select-btn" data-val="monthly" onclick="selectFreq(this)">월 1회</button>
       </div>
     </div>
     <div class="form-actions">
@@ -661,13 +666,24 @@
     <h3 id="challenge-modal-title">챌린지 추가</h3>
     <input type="hidden" id="edit-challenge-id">
     <div class="form-group"><label>챌린지 이름</label><input type="text" id="challenge-name-input" placeholder="예: 밀가루 2주 금지"></div>
-    <div class="form-group"><label>기간</label>
+    <div class="form-group"><label>유형</label>
+      <div class="select-group" id="chal-type-select">
+        <button class="select-btn selected" data-val="period" onclick="selectChalType(this)">📅 기간</button>
+        <button class="select-btn" data-val="count" onclick="selectChalType(this)">🔢 횟수</button>
+      </div>
+    </div>
+    <div id="chal-period-section" class="form-group"><label>기간</label>
       <div class="select-group" id="duration-select">
         <button class="select-btn selected" data-val="7" onclick="selectDuration(this)">1주일</button>
         <button class="select-btn" data-val="14" onclick="selectDuration(this)">2주일</button>
         <button class="select-btn" data-val="21" onclick="selectDuration(this)">3주일</button>
         <button class="select-btn" data-val="30" onclick="selectDuration(this)">1개월</button>
+        <button class="select-btn" data-val="60" onclick="selectDuration(this)">2개월</button>
+        <button class="select-btn" data-val="90" onclick="selectDuration(this)">3개월</button>
       </div>
+    </div>
+    <div id="chal-count-section" class="form-group" style="display:none"><label>목표 횟수</label>
+      <input type="number" id="challenge-count-input" min="1" max="9999" value="10" placeholder="예: 30" style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;">
     </div>
     <div class="form-actions">
       <button class="btn btn-secondary" onclick="closeModal('challenge-modal')">취소</button>
@@ -995,13 +1011,18 @@ function renderToday() {
     activeChal.forEach(c=>{
       const cl=state.challengeLogs[c.id]||{};
       const dc=Object.values(cl).filter(Boolean).length;
-      const td=cl[t]; const p2=Math.round(dc/c.duration*100); const el=getDaysElapsed(c.startDate);
+      const td=cl[t];
+      const isCount=c.type==='count';
+      const p2=isCount?Math.min(100,Math.round(dc/c.targetCount*100)):Math.round(dc/c.duration*100);
+      const el=isCount?null:getDaysElapsed(c.startDate);
+      const infoLeft=isCount?`${dc}/${c.targetCount}회`:`${dc}/${c.duration}일`;
+      const infoRight=isCount?(dc>=c.targetCount?'🎉 달성!':''):`${c.duration-el}일 남음`;
       html+=`<div class="challenge-card">
         <div class="challenge-card-header"><h4>⚡ ${c.name}</h4>
           <button class="challenge-done-btn" onclick="toggleChallenge('${c.id}')">${td?'✓ 완료':'오늘 완료'}</button>
         </div>
         <div class="challenge-bar"><div class="challenge-bar-fill" style="width:${p2}%"></div></div>
-        <div class="challenge-info"><span>${dc}/${c.duration}일</span><span>${c.duration-el}일 남음</span></div>
+        <div class="challenge-info"><span>${infoLeft}</span><span>${infoRight}</span></div>
       </div>`;
     });
     html+='</div>';
@@ -1029,9 +1050,10 @@ function renderToday() {
 }
 
 function routineCardHTML(r, done, isMystery) {
-  const weekCount=r.freq==='weekly3'?getWeekCountById(r.id):null;
-  const subText=r.freq==='weekly3'?`이번 주 ${weekCount}/3회`:'';
-  const freqLabel=r.freq==='weekly3'?'주 3회':r.freq==='weekly'?'주 1회':'';
+  const freqLabel=getFreqLabel(r.freq);
+  const weekTarget=getWeekTarget(r.freq);
+  const weekCount=weekTarget?getWeekCountById(r.id):null;
+  const subText=weekTarget?`이번 주 ${weekCount}/${weekTarget}회`:'';
   const t=today();
   const failReason=(state.failLogs[t]||{})[r.id];
   const fr=failReason?FAIL_REASONS.find(x=>x.id===failReason):null;
@@ -1069,6 +1091,15 @@ function toggleBundle(group) {
   bundleStates[group]=el.classList.contains('collapsed');
 }
 
+function getFreqLabel(freq){
+  const map={daily:'매일',weekly6:'주 6회',weekly5:'주 5회',weekly4:'주 4회',weekly3:'주 3회',weekly2:'주 2회',weekly:'주 1회',monthly:'월 1회'};
+  return map[freq]||freq||'매일';
+}
+function getWeekTarget(freq){
+  if(!freq||freq==='daily'||freq==='monthly') return null;
+  const m=freq.match(/^weekly(\d+)$/);
+  return m?parseInt(m[1]):null;
+}
 function getWeekCountById(routineId) {
   const d=new Date(),dow=d.getDay(),mon=new Date(d);
   mon.setDate(d.getDate()-(dow===0?6:dow-1));
@@ -1500,10 +1531,10 @@ function getSelfTrustLevel(score){
   return lv;
 }
 
+
 function renderChar(){
   const {health,growth,life}=state.character.stats;
   const title=getCurrentTitle(health,growth,life);
-  document.getElementById('char-avatar').textContent=[...title.emoji].find(c=>/\p{Emoji}/u.test(c))||'🧙';
   document.getElementById('char-main-title').textContent=title.name;
   document.getElementById('char-sub-desc').textContent=title.desc;
 
@@ -1737,7 +1768,7 @@ function routineManageCard(r){
     <div class="manage-dot" style="background:${catColor(r.category)}"></div>
     <div class="manage-info">
       <div class="manage-name">${r.name}</div>
-      <div class="manage-sub">${catLabel(r.category)} · ${r.freq==='daily'?'매일':r.freq==='weekly3'?'주 3회':'주 1회'}${r.group?' · '+(r.group==='night'?'🌙 나이트':'🌅 모닝'):''}</div>
+      <div class="manage-sub">${catLabel(r.category)} · ${getFreqLabel(r.freq)}${r.group?' · '+(r.group==='night'?'🌙 나이트':'🌅 모닝'):''}</div>
     </div>
     <div class="manage-actions">
       <button class="icon-btn" onclick="editRoutine('${r.id}')">✏️</button>
@@ -1751,7 +1782,7 @@ function challengeManageCard(c,ia){
     <div style="font-size:20px">⚡</div>
     <div class="manage-info">
       <div class="manage-name">${c.name}</div>
-      <div class="manage-sub">${done}/${c.duration}일 완료 · ${ia?getDaysElapsed(c.startDate)+'일째':'종료'}</div>
+      <div class="manage-sub">${c.type==='count'?`${done}/${c.targetCount}회 완료`:`${done}/${c.duration}일 완료 · ${ia?getDaysElapsed(c.startDate)+'일째':'종료'}`}</div>
     </div>
     <div class="manage-actions"><button class="icon-btn" onclick="editChallenge('${c.id}')">✏️</button></div>
   </div>`;
@@ -1951,13 +1982,21 @@ function deleteCurrentRoutine(){
   save();closeModal('routine-modal');renderManage();renderToday();showToast('루틴이 삭제됐어요');
 }
 
-let cDur=7;
+let cDur=7,cChalType='period';
+function _resetChalTypeUI(type){
+  cChalType=type;
+  document.querySelectorAll('#chal-type-select .select-btn').forEach(b=>b.classList.toggle('selected',b.dataset.val===type));
+  document.getElementById('chal-period-section').style.display=type==='period'?'':'none';
+  document.getElementById('chal-count-section').style.display=type==='count'?'':'none';
+}
 function openAddChallenge(){
   document.getElementById('challenge-modal-title').textContent='챌린지 추가';
   document.getElementById('edit-challenge-id').value='';
   document.getElementById('challenge-name-input').value='';
   document.getElementById('delete-challenge-btn').style.display='none';
   cDur=7;document.querySelectorAll('#duration-select .select-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  document.getElementById('challenge-count-input').value='10';
+  _resetChalTypeUI('period');
   openModal('challenge-modal');
 }
 function editChallenge(id){
@@ -1966,16 +2005,36 @@ function editChallenge(id){
   document.getElementById('edit-challenge-id').value=id;
   document.getElementById('challenge-name-input').value=c.name;
   document.getElementById('delete-challenge-btn').style.display='';
-  cDur=c.duration;document.querySelectorAll('#duration-select .select-btn').forEach(b=>b.classList.toggle('selected',parseInt(b.dataset.val)===cDur));
+  _resetChalTypeUI(c.type||'period');
+  if(c.type==='count'){
+    document.getElementById('challenge-count-input').value=c.targetCount||10;
+  } else {
+    cDur=c.duration;document.querySelectorAll('#duration-select .select-btn').forEach(b=>b.classList.toggle('selected',parseInt(b.dataset.val)===cDur));
+  }
   openModal('challenge-modal');
 }
 function selectDuration(b){document.querySelectorAll('#duration-select .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cDur=parseInt(b.dataset.val);}
+function selectChalType(b){
+  document.querySelectorAll('#chal-type-select .select-btn').forEach(x=>x.classList.remove('selected'));
+  b.classList.add('selected');cChalType=b.dataset.val;
+  document.getElementById('chal-period-section').style.display=cChalType==='period'?'':'none';
+  document.getElementById('chal-count-section').style.display=cChalType==='count'?'':'none';
+}
 function saveChallenge(){
   const name=document.getElementById('challenge-name-input').value.trim();
   if(!name){showToast('이름을 입력해주세요');return;}
   const eid=document.getElementById('edit-challenge-id').value;
-  if(eid){const c=state.challenges.find(x=>x.id===eid);if(c){c.name=name;c.duration=cDur;}}
-  else{const nid='c'+Date.now();state.challenges.push({id:nid,name,duration:cDur,startDate:today()});state.challengeLogs[nid]={};}
+  const isCount=cChalType==='count';
+  const targetCount=isCount?Math.max(1,parseInt(document.getElementById('challenge-count-input').value)||10):null;
+  if(eid){
+    const c=state.challenges.find(x=>x.id===eid);
+    if(c){c.name=name;c.type=cChalType;if(isCount){c.targetCount=targetCount;delete c.duration;}else{c.duration=cDur;delete c.targetCount;}}
+  } else {
+    const nid='c'+Date.now();
+    const obj={id:nid,name,type:cChalType,startDate:today()};
+    if(isCount) obj.targetCount=targetCount; else obj.duration=cDur;
+    state.challenges.push(obj);state.challengeLogs[nid]={};
+  }
   save();closeModal('challenge-modal');renderManage();renderToday();
   showToast(eid?'챌린지가 수정됐어요':'챌린지가 시작됐어요! ⚡');
 }
@@ -1985,7 +2044,10 @@ function deleteCurrentChallenge(){
   state.challenges=state.challenges.filter(c=>c.id!==id);
   save();closeModal('challenge-modal');renderManage();renderToday();showToast('챌린지가 삭제됐어요');
 }
-function isChallengeActive(c){const e=new Date(c.startDate);e.setDate(e.getDate()+c.duration);return new Date()<e;}
+function isChallengeActive(c){
+  if(c.type==='count'){const cl=state.challengeLogs[c.id]||{};return Object.values(cl).filter(Boolean).length<c.targetCount;}
+  const e=new Date(c.startDate);e.setDate(e.getDate()+c.duration);return new Date()<e;
+}
 function getDaysElapsed(s){return Math.floor((new Date()-new Date(s))/86400000);}
 
 function openModal(id){document.getElementById(id).classList.add('open');}
