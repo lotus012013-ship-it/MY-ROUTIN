@@ -388,6 +388,10 @@
   .icon-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text-dim); border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; }
   .toggle-btn { background:none; border:none; cursor:pointer; font-size:20px; padding:0; }
   .challenge-manage-card { background:var(--gold-dim); border-radius:14px; padding:12px 16px; margin-bottom:8px; display:flex; align-items:center; gap:12px; border:1px solid rgba(255,215,0,0.3); }
+  .drag-handle { font-size:18px; color:var(--text-dim); cursor:grab; padding:4px 6px; touch-action:none; flex-shrink:0; }
+  .drag-handle:active { cursor:grabbing; }
+  .routine-manage-card.drag-over { border-color:var(--gold); background:rgba(255,215,0,0.08); }
+  .routine-manage-card.dragging { opacity:0.4; }
 
   /* DAY DETAIL */
   .day-detail-row {
@@ -421,6 +425,13 @@
   .fail-reason-btn span { font-size: 11px; line-height: 1.3; text-align: center; }
   .fail-reason-btn.selected { border-color: #6c63ff; background: rgba(108,99,255,0.15); color: var(--text); }
   .fail-reason-btn:hover { border-color: var(--text-dim); }
+  .history-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-top:8px; }
+  .history-cal-label { text-align:center; font-size:10px; color:var(--text-dim); padding:2px 0; }
+  .history-cal-day { aspect-ratio:1; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:10px; background:var(--surface2); color:var(--text-dim); }
+  .history-cal-day.empty { background:transparent; }
+  .history-cal-day.done { background:var(--gold); color:#000; font-weight:700; }
+  .history-cal-day.today-mark { outline:2px solid var(--gold); outline-offset:-2px; }
+  .history-month-label { font-size:12px; font-weight:600; color:var(--text-dim); margin:12px 0 4px; }
   .fail-insight {
     background: rgba(108,99,255,0.1); border: 1px solid rgba(108,99,255,0.3);
     border-radius: 14px; padding: 16px; margin-bottom: 4px;
@@ -633,6 +644,18 @@
   </div>
 </div>
 
+<!-- HISTORY CALENDAR MODAL -->
+<div class="modal-overlay" id="history-modal">
+  <div class="modal">
+    <h3 id="history-modal-title" style="margin-bottom:4px"></h3>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:4px" id="history-modal-sub"></p>
+    <div id="history-cal-body"></div>
+    <div class="form-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('history-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- CATEGORY MODAL -->
 <div class="modal-overlay" id="category-modal">
   <div class="modal">
@@ -768,12 +791,12 @@ function catLabel(id) { return getCat(id).name; }
 function catIcon(id)  { return getCat(id).icon; }
 
 const FAIL_REASONS = [
-  {id:'tired',     label:'피곤함·컨디션',          emoji:'😴'},
-  {id:'lazy',      label:'귀찮음·무기력',           emoji:'🛋️'},
-  {id:'mood',      label:'감정 기복·불안',          emoji:'😔'},
-  {id:'notime',    label:'시간이 없음',             emoji:'⏰'},
-  {id:'imperfect', label:'완벽하게 못 할 것 같아서', emoji:'😰'},
-  {id:'pushed',    label:'다른 일에 밀림',          emoji:'📋'},
+  {id:'condition', label:'컨디션 문제',  emoji:'🤒'},
+  {id:'external',  label:'외부 요인',   emoji:'🌧️'},
+  {id:'plan',      label:'약속 있음',   emoji:'📅'},
+  {id:'etc',       label:'그냥 못 함',  emoji:'🤷'},
+  {id:'impulse',   label:'충동적 요인', emoji:'⚡'},
+  {id:'notime',    label:'시간 없음',   emoji:'⏰'},
 ];
 
 const MOODS = [
@@ -1017,7 +1040,7 @@ function renderToday() {
       const el=isCount?null:getDaysElapsed(c.startDate);
       const infoLeft=isCount?`${dc}/${c.targetCount}회`:`${dc}/${c.duration}일`;
       const infoRight=isCount?(dc>=c.targetCount?'🎉 달성!':''):`${c.duration-el}일 남음`;
-      html+=`<div class="challenge-card">
+      html+=`<div class="challenge-card" data-cid="${c.id}" data-cname="${c.name.replace(/"/g,'&quot;')}">
         <div class="challenge-card-header"><h4>⚡ ${c.name}</h4>
           <button class="challenge-done-btn" onclick="toggleChallenge('${c.id}')">${td?'✓ 완료':'오늘 완료'}</button>
         </div>
@@ -1047,6 +1070,13 @@ function renderToday() {
     const el=document.getElementById('bundle-body-'+g);
     if(el&&c) el.classList.add('collapsed');
   });
+  // long-press → 히스토리 달력
+  document.querySelectorAll('.routine-card[data-rid]').forEach(el=>{
+    addLongPress(el, ()=>openHistoryModal('routine', el.dataset.rid, el.dataset.rname));
+  });
+  document.querySelectorAll('.challenge-card[data-cid]').forEach(el=>{
+    addLongPress(el, ()=>openHistoryModal('challenge', el.dataset.cid, el.dataset.cname));
+  });
 }
 
 function routineCardHTML(r, done, isMystery) {
@@ -1057,7 +1087,7 @@ function routineCardHTML(r, done, isMystery) {
   const t=today();
   const failReason=(state.failLogs[t]||{})[r.id];
   const fr=failReason?FAIL_REASONS.find(x=>x.id===failReason):null;
-  return `<div class="routine-card ${done?'done':''} ${isMystery&&!done?'mystery':''}" onclick="toggleRoutine('${r.id}',event)">
+  return `<div class="routine-card ${done?'done':''} ${isMystery&&!done?'mystery':''}" data-rid="${r.id}" data-rname="${r.name.replace(/"/g,'&quot;')}" onclick="toggleRoutine('${r.id}',event)">
     ${isMystery&&!done?'<div class="mystery-badge">🎲 보너스?</div>':''}
     <div class="check-circle">${done?'✓':''}</div>
     <div class="routine-info">
@@ -1757,14 +1787,97 @@ function renderManage(){
   let html=a.map(routineManageCard).join('');
   if(na.length){html+=`<div style="font-size:12px;color:var(--text-dim);margin:12px 0 8px">비활성화된 루틴</div>`;html+=na.map(routineManageCard).join('');}
   document.getElementById('manage-list').innerHTML=html||'<div class="empty-state">루틴이 없어요</div>';
+  _initRoutineDrag();
   const aC=state.challenges.filter(c=>isChallengeActive(c)),eC=state.challenges.filter(c=>!isChallengeActive(c));
   let ch=aC.map(c=>challengeManageCard(c,true)).join('');
   if(eC.length){ch+=`<div style="font-size:12px;color:var(--text-dim);margin:12px 0 8px">종료된 챌린지</div>`;ch+=eC.map(c=>challengeManageCard(c,false)).join('');}
   document.getElementById('challenge-manage-list').innerHTML=ch||'<div class="empty-state">진행 중인 챌린지가 없어요</div>';
 }
+function _initRoutineDrag() {
+  const list = document.getElementById('manage-list');
+  let dragSrc = null, touchDragEl = null, touchClone = null, touchStartY = 0;
+
+  list.querySelectorAll('.routine-manage-card').forEach(card => {
+    const handle = card.querySelector('.drag-handle');
+    if (!handle) return;
+
+    // Desktop drag
+    handle.addEventListener('mousedown', () => { card.draggable = true; });
+    card.addEventListener('dragstart', e => {
+      dragSrc = card;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      card.draggable = false;
+      card.classList.remove('dragging');
+      list.querySelectorAll('.routine-manage-card').forEach(c => c.classList.remove('drag-over'));
+      _saveRoutineOrder();
+    });
+    card.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+    card.addEventListener('dragenter', e => { e.preventDefault(); if (card !== dragSrc) card.classList.add('drag-over'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      if (dragSrc && dragSrc !== card) {
+        const cards = [...list.querySelectorAll('.routine-manage-card')];
+        const si = cards.indexOf(dragSrc), ti = cards.indexOf(card);
+        if (si < ti) card.after(dragSrc); else card.before(dragSrc);
+      }
+      card.classList.remove('drag-over');
+    });
+
+    // Touch drag
+    handle.addEventListener('touchstart', e => {
+      const touch = e.touches[0];
+      touchDragEl = card;
+      touchStartY = touch.clientY;
+      touchClone = card.cloneNode(true);
+      touchClone.style.cssText = `position:fixed;left:${card.getBoundingClientRect().left}px;top:${card.getBoundingClientRect().top}px;width:${card.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.4);`;
+      document.body.appendChild(touchClone);
+      card.classList.add('dragging');
+    }, {passive: true});
+
+    handle.addEventListener('touchmove', e => {
+      if (!touchDragEl) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const dy = touch.clientY - touchStartY;
+      touchClone.style.top = (touchDragEl.getBoundingClientRect().top + dy) + 'px';
+      const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.routine-manage-card');
+      list.querySelectorAll('.routine-manage-card').forEach(c => c.classList.remove('drag-over'));
+      if (target && target !== touchDragEl) target.classList.add('drag-over');
+    }, {passive: false});
+
+    handle.addEventListener('touchend', e => {
+      if (!touchDragEl) return;
+      const touch = e.changedTouches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.routine-manage-card');
+      if (target && target !== touchDragEl) {
+        const cards = [...list.querySelectorAll('.routine-manage-card')];
+        const si = cards.indexOf(touchDragEl), ti = cards.indexOf(target);
+        if (si < ti) target.after(touchDragEl); else target.before(touchDragEl);
+      }
+      touchDragEl.classList.remove('dragging');
+      list.querySelectorAll('.routine-manage-card').forEach(c => c.classList.remove('drag-over'));
+      touchClone.remove();
+      touchDragEl = null; touchClone = null;
+      _saveRoutineOrder();
+    });
+  });
+}
+
+function _saveRoutineOrder() {
+  const ids = [...document.querySelectorAll('#manage-list .routine-manage-card')].map(el => el.dataset.id);
+  state.routines.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+  save();
+  renderToday();
+}
+
 function routineManageCard(r){
   const ia=r.active!==false;
-  return `<div class="routine-manage-card" style="opacity:${ia?1:0.5}">
+  return `<div class="routine-manage-card" data-id="${r.id}" style="opacity:${ia?1:0.5}">
+    <div class="drag-handle" title="순서 변경">⠿</div>
     <div class="manage-dot" style="background:${catColor(r.category)}"></div>
     <div class="manage-info">
       <div class="manage-name">${r.name}</div>
@@ -1811,6 +1924,76 @@ function selectFailReason(reasonId) {
   else openDayDetail(date);
   showToast('기록했어요. 자책하지 말아요 💙');
 }
+// ── HISTORY CALENDAR ─────────────────────────────
+let _historyCtx = null;
+function openHistoryModal(type, id, name) {
+  _historyCtx = {type, id, name};
+  document.getElementById('history-modal-title').textContent = name;
+  _renderHistoryCal();
+  openModal('history-modal');
+}
+function _renderHistoryCal() {
+  const {type, id} = _historyCtx;
+  const MN=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const DAY_LABELS = ['일','월','화','수','목','금','토'];
+  const todayStr = today();
+  const [ty,tm] = todayStr.split('-').map(Number);
+  let html = '';
+  for (let mo = 2; mo >= 0; mo--) {
+    let y = ty, m = tm - mo;
+    if (m <= 0) { m += 12; y--; }
+    const firstDay = new Date(y, m-1, 1).getDay();
+    const daysInMonth = new Date(y, m, 0).getDate();
+    html += `<div class="history-month-label">${y}년 ${MN[m-1]}</div>`;
+    html += `<div class="history-cal-grid">`;
+    html += DAY_LABELS.map(d=>`<div class="history-cal-label">${d}</div>`).join('');
+    for (let i=0; i<firstDay; i++) html += `<div class="history-cal-day empty"></div>`;
+    for (let d=1; d<=daysInMonth; d++) {
+      const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isFuture = ds > todayStr;
+      const isDone = type==='routine' ? !!(state.logs[ds]?.[id]) : !!(state.challengeLogs[id]?.[ds]);
+      const isToday = ds === todayStr;
+      let cls = 'history-cal-day';
+      if (isDone) cls += ' done';
+      if (isToday) cls += ' today-mark';
+      if (isFuture) cls += ' empty';
+      const click = (!isFuture && type==='routine') ? `onclick="toggleHistoryDay('${ds}')"` : '';
+      const style = (!isFuture && type==='routine') ? 'style="cursor:pointer"' : '';
+      html += `<div class="${cls}" ${click} ${style}>${isFuture?'':d}</div>`;
+    }
+    html += `</div>`;
+  }
+  const totalDone = type==='routine'
+    ? Object.values(state.logs).filter(log=>log[id]).length
+    : Object.values(state.challengeLogs[id]||{}).filter(Boolean).length;
+  document.getElementById('history-modal-sub').textContent = `총 ${totalDone}회 완료`;
+  document.getElementById('history-cal-body').innerHTML = html;
+}
+function toggleHistoryDay(ds) {
+  const {id} = _historyCtx;
+  if (!state.logs[ds]) state.logs[ds] = {};
+  state.logs[ds][id] = !state.logs[ds][id];
+  if (!state.logs[ds][id]) delete state.logs[ds][id];
+  save();
+  _renderHistoryCal();
+  if (ds === today()) renderToday();
+}
+
+// long-press 유틸
+let _lpTimer = null;
+function addLongPress(el, cb) {
+  const start = (e) => {
+    _lpTimer = setTimeout(() => { _lpTimer=null; cb(e); }, 500);
+  };
+  const cancel = () => { if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} };
+  el.addEventListener('touchstart', start, {passive:true});
+  el.addEventListener('touchend', cancel);
+  el.addEventListener('touchmove', cancel);
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', cancel);
+  el.addEventListener('mouseleave', cancel);
+}
+
 function clearFailReason() {
   const routineId = document.getElementById('fail-routine-id').value;
   const date = failTargetDate || today();
