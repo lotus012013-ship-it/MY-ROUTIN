@@ -117,6 +117,8 @@
     flex-shrink: 0; font-size: 14px; transition: all 0.2s;
   }
   .routine-card.done .check-circle { background: var(--gold); border-color: var(--gold); color: #000; }
+  .routine-card.failed .check-circle { background: rgba(230,57,70,0.15); border-color: #e63946; color: #e63946; }
+  .routine-card.failed .routine-name { text-decoration: line-through; color: var(--text-dim); }
   .routine-info { flex: 1; }
   .routine-name { font-size: 14px; font-weight: 500; }
   .routine-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
@@ -1087,9 +1089,9 @@ function routineCardHTML(r, done, isMystery) {
   const t=today();
   const failReason=(state.failLogs[t]||{})[r.id];
   const fr=failReason?FAIL_REASONS.find(x=>x.id===failReason):null;
-  return `<div class="routine-card ${done?'done':''} ${isMystery&&!done?'mystery':''}" data-rid="${r.id}" data-rname="${r.name.replace(/"/g,'&quot;')}" onclick="toggleRoutine('${r.id}',event)">
+  return `<div class="routine-card ${done?'done':fr?'failed':''} ${isMystery&&!done?'mystery':''}" data-rid="${r.id}" data-rname="${r.name.replace(/"/g,'&quot;')}" onclick="toggleRoutine('${r.id}',event)">
     ${isMystery&&!done?'<div class="mystery-badge">🎲 보너스?</div>':''}
-    <div class="check-circle">${done?'✓':''}</div>
+    <div class="check-circle">${done?'✓':fr?'✕':''}</div>
     <div class="routine-info">
       <div class="routine-name">${r.name}</div>
       ${subText?`<div class="routine-sub">${subText}</div>`:''}
