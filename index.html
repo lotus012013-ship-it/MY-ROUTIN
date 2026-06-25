@@ -255,8 +255,12 @@
   .char-main-title { font-size:22px; font-weight:800; color:var(--gold); text-shadow:0 0 20px rgba(255,215,0,0.4); margin-bottom:6px; }
   .char-sub-desc { font-size:13px; color:var(--text-dim); line-height:1.6; max-width:260px; margin:0 auto; }
 
-  .self-trust-card { background:var(--surface); border-radius:20px; padding:18px 20px; margin-bottom:16px; border:1px solid #6c63ff44; position:relative; overflow:hidden; }
-  .self-trust-card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(108,99,255,0.06),rgba(67,233,123,0.06)); pointer-events:none; }
+  .weekly-cmp-card { background:var(--surface); border-radius:20px; padding:18px 20px; margin-bottom:16px; border:1px solid var(--border); }
+  .wcmp-summary { font-size:22px; font-weight:800; margin:6px 0 16px; }
+  .wcmp-group { margin-bottom:14px; }
+  .wcmp-group-label { font-size:11px; font-weight:700; color:var(--text-dim); margin-bottom:6px; letter-spacing:0.4px; }
+  .wcmp-chip-list { display:flex; flex-wrap:wrap; gap:6px; }
+  .wcmp-chip { font-size:12px; font-weight:600; padding:5px 12px; border-radius:20px; }
   .trust-header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
   .trust-emoji { font-size:32px; flex-shrink:0; }
   .trust-label { font-size:11px; color:var(--text-dim); margin-bottom:2px; }
@@ -524,7 +528,7 @@
     <div class="char-main-title" id="char-main-title">칭호</div>
     <div class="char-sub-desc" id="char-sub-desc"></div>
   </div>
-  <div class="self-trust-card" id="self-trust-card"></div>
+  <div id="habit-card"></div>
   <div class="stat-ranks" id="stat-ranks"></div>
   <div class="title-collection">
     <h3>🏆 칭호 수집</h3>
@@ -1564,34 +1568,150 @@ function getSelfTrustLevel(score){
 }
 
 
+function getWeekRange(offsetWeeks) {
+  const todayStr = today();
+  const td = new Date(todayStr);
+  const dow = td.getDay();
+  const mon = new Date(td); mon.setDate(td.getDate() - (dow === 0 ? 6 : dow - 1) - offsetWeeks * 7);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return { start: fmt(mon), end: fmt(sun) };
+}
+
+function calcWeekRate(routineId, weekStart, weekEnd) {
+  let done = 0, total = 0;
+  const s = new Date(weekStart), e = new Date(weekEnd);
+  const todayStr = today();
+  for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (ds > todayStr) break;
+    total++;
+    if (state.logs[ds]?.[routineId]) done++;
+  }
+  return total > 0 ? { rate: Math.round(done / total * 100), done, total } : { rate: 0, done: 0, total: 0 };
+}
+
+function renderWeeklyCompare() {
+  const active = state.routines.filter(r => r.active !== false);
+  if (!active.length) return '';
+  const thisW = getWeekRange(0), lastW = getWeekRange(1);
+
+  const compared = active.map(r => {
+    const tw = calcWeekRate(r.id, thisW.start, thisW.end);
+    const lw = calcWeekRate(r.id, lastW.start, lastW.end);
+    return { name: r.name, diff: tw.done - lw.done, twDone: tw.done, lwDone: lw.done };
+  }).filter(x => x.twDone > 0 || x.lwDone > 0);
+
+  if (!compared.length) return `<div class="weekly-cmp-card">
+    <div style="font-size:13px;color:var(--text-dim);text-align:center;padding:8px 0">아직 이번 주 데이터가 없어요</div>
+  </div>`;
+
+  const totalThis = compared.reduce((s,x)=>s+x.twDone,0);
+  const totalLast = compared.reduce((s,x)=>s+x.lwDone,0);
+  const diffTotal = totalThis - totalLast;
+
+  const emoji = diffTotal > 0 ? '🎉' : diffTotal < 0 ? '😅' : '😊';
+  const summaryColor = diffTotal > 0 ? '#43e97b' : diffTotal < 0 ? '#e63946' : 'var(--gold)';
+  const summaryLine = diffTotal > 0
+    ? `지난 주보다 ${diffTotal}회 더 했어요!`
+    : diffTotal < 0
+    ? `지난 주보다 ${Math.abs(diffTotal)}회 덜 했어요`
+    : `지난 주랑 똑같이 했어요`;
+
+  const improved = compared.filter(x => x.diff > 0).map(x => x.name);
+  const declined = compared.filter(x => x.diff < 0).map(x => x.name);
+
+  const chips = (names, bg, color) => names.map(n =>
+    `<div class="wcmp-chip" style="background:${bg};color:${color}">${n}</div>`
+  ).join('');
+
+  const group = (label, names, bg, color) => names.length ? `
+    <div class="wcmp-group">
+      <div class="wcmp-group-label">${label}</div>
+      <div class="wcmp-chip-list">${chips(names, bg, color)}</div>
+    </div>` : '';
+
+  return `<div class="weekly-cmp-card">
+    <div style="font-size:12px;color:var(--text-dim)">이번 주 vs 지난 주</div>
+    <div class="wcmp-summary" style="color:${summaryColor}">${emoji} ${summaryLine}</div>
+    ${group('잘한 루틴 👍', improved, 'rgba(67,233,123,0.15)', '#43e97b')}
+    ${group('아쉬운 루틴 😬', declined, 'rgba(230,57,70,0.12)', '#e63946')}
+    ${!improved.length && !declined.length ? `<div style="font-size:13px;color:var(--text-dim)">루틴 변화가 없어요</div>` : ''}
+  </div>`;
+}
+
+function calcMonthRate(routineId, year, month) {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const todayStr = today();
+  let done = 0, total = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if (ds > todayStr) break;
+    total++;
+    if (state.logs[ds]?.[routineId]) done++;
+  }
+  return { done, total };
+}
+
+function renderMonthlyCompare() {
+  const active = state.routines.filter(r => r.active !== false);
+  if (!active.length) return '';
+
+  const todayStr = today();
+  const [ty, tm] = todayStr.split('-').map(Number);
+  const lastM = tm === 1 ? 12 : tm - 1;
+  const lastY = tm === 1 ? ty - 1 : ty;
+
+  const compared = active.map(r => {
+    const tw = calcMonthRate(r.id, ty, tm);
+    const lw = calcMonthRate(r.id, lastY, lastM);
+    return { name: r.name, diff: tw.done - lw.done, twDone: tw.done, lwDone: lw.done };
+  }).filter(x => x.twDone > 0 || x.lwDone > 0);
+
+  if (!compared.length) return `<div class="weekly-cmp-card">
+    <div style="font-size:13px;color:var(--text-dim);text-align:center;padding:8px 0">아직 이번 달 데이터가 없어요</div>
+  </div>`;
+
+  const totalThis = compared.reduce((s,x)=>s+x.twDone,0);
+  const totalLast = compared.reduce((s,x)=>s+x.lwDone,0);
+  const diffTotal = totalThis - totalLast;
+
+  const emoji = diffTotal > 0 ? '🎉' : diffTotal < 0 ? '😅' : '😊';
+  const summaryColor = diffTotal > 0 ? '#43e97b' : diffTotal < 0 ? '#e63946' : 'var(--gold)';
+  const summaryLine = diffTotal > 0
+    ? `지난 달보다 ${diffTotal}회 더 했어요!`
+    : diffTotal < 0
+    ? `지난 달보다 ${Math.abs(diffTotal)}회 덜 했어요`
+    : `지난 달이랑 똑같이 했어요`;
+
+  const improved = compared.filter(x => x.diff > 0).map(x => x.name);
+  const declined = compared.filter(x => x.diff < 0).map(x => x.name);
+
+  const chips = (names, bg, color) => names.map(n =>
+    `<div class="wcmp-chip" style="background:${bg};color:${color}">${n}</div>`
+  ).join('');
+  const group = (label, names, bg, color) => names.length ? `
+    <div class="wcmp-group">
+      <div class="wcmp-group-label">${label}</div>
+      <div class="wcmp-chip-list">${chips(names, bg, color)}</div>
+    </div>` : '';
+
+  return `<div class="weekly-cmp-card" style="margin-top:12px">
+    <div style="font-size:12px;color:var(--text-dim)">이번 달 vs 지난 달</div>
+    <div class="wcmp-summary" style="color:${summaryColor}">${emoji} ${summaryLine}</div>
+    ${group('잘한 루틴 👍', improved, 'rgba(67,233,123,0.15)', '#43e97b')}
+    ${group('아쉬운 루틴 😬', declined, 'rgba(230,57,70,0.12)', '#e63946')}
+    ${!improved.length && !declined.length ? `<div style="font-size:13px;color:var(--text-dim)">루틴 변화가 없어요</div>` : ''}
+  </div>`;
+}
+
 function renderChar(){
   const {health,growth,life}=state.character.stats;
   const title=getCurrentTitle(health,growth,life);
   document.getElementById('char-main-title').textContent=title.name;
   document.getElementById('char-sub-desc').textContent=title.desc;
 
-  // 자기신뢰 점수
-  const {score:trustScore,activeDays,totalDays}=calcSelfTrust();
-  const trustLv=getSelfTrustLevel(trustScore);
-  const nextTrustLv=SELF_TRUST_LEVELS.find(l=>l.min>trustScore);
-  const trustBarPct=nextTrustLv?Math.round((trustScore-trustLv.min)/(nextTrustLv.min-trustLv.min)*100):100;
-  document.getElementById('self-trust-card').innerHTML=`
-    <div class="trust-header">
-      <span class="trust-emoji">${trustLv.emoji}</span>
-      <div>
-        <div class="trust-label">자기신뢰 점수</div>
-        <div class="trust-quote">나는 나와 한 약속을 지키는 사람이다</div>
-      </div>
-      <div class="trust-score">${trustScore}<span style="font-size:14px">%</span></div>
-    </div>
-    <div class="trust-level-name">${trustLv.name}</div>
-    <div class="rank-bar" style="margin:6px 0"><div class="rank-bar-fill" style="width:${trustBarPct}%;background:linear-gradient(90deg,#6c63ff,#43e97b)"></div></div>
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim)">
-      <span>${trustLv.desc}</span>
-      <span>${activeDays}/${totalDays}일</span>
-    </div>
-    ${nextTrustLv?`<div style="font-size:11px;color:var(--text-dim);margin-top:4px">다음: ${nextTrustLv.emoji} ${nextTrustLv.name} (${nextTrustLv.min}%)</div>`:'<div style="font-size:11px;color:var(--gold);margin-top:4px">최고 등급 달성! ⭐</div>'}
-  `;
+  document.getElementById('habit-card').innerHTML = renderWeeklyCompare() + renderMonthlyCompare();
 
   // 카테고리별 능력 점수
   const cats=getCats();
