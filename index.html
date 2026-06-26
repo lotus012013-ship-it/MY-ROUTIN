@@ -1591,6 +1591,23 @@ function calcWeekRate(routineId, weekStart, weekEnd) {
   return total > 0 ? { rate: Math.round(done / total * 100), done, total } : { rate: 0, done: 0, total: 0 };
 }
 
+function topCatSummary(active, getRateFn) {
+  const catDone = {};
+  active.forEach(r => {
+    const { done } = getRateFn(r.id);
+    if (done > 0) catDone[r.category] = (catDone[r.category] || 0) + done;
+  });
+  const entries = Object.entries(catDone).sort((a,b) => b[1] - a[1]);
+  if (!entries.length) return '';
+  const [topId, topCount] = entries[0];
+  const cat = getCats().find(c => c.id === topId);
+  if (!cat) return '';
+  return `<div style="font-size:14px;font-weight:700;margin-bottom:14px">
+    <span style="color:${cat.color}">${cat.icon} ${cat.name}</span>
+    <span style="font-size:12px;font-weight:400;color:var(--text-dim)"> 에 가장 집중했어요 · ${topCount}회</span>
+  </div>`;
+}
+
 function renderWeeklyCompare() {
   const active = state.routines.filter(r => r.active !== false);
   if (!active.length) return '';
@@ -1599,41 +1616,30 @@ function renderWeeklyCompare() {
   const compared = active.map(r => {
     const tw = calcWeekRate(r.id, thisW.start, thisW.end);
     const lw = calcWeekRate(r.id, lastW.start, lastW.end);
-    return { name: r.name, diff: tw.done - lw.done, twDone: tw.done, lwDone: lw.done };
+    return { r, name: r.name, diff: tw.done - lw.done, twDone: tw.done, lwDone: lw.done };
   }).filter(x => x.twDone > 0 || x.lwDone > 0);
 
   if (!compared.length) return `<div class="weekly-cmp-card">
     <div style="font-size:13px;color:var(--text-dim);text-align:center;padding:8px 0">아직 이번 주 데이터가 없어요</div>
   </div>`;
 
-  const totalThis = compared.reduce((s,x)=>s+x.twDone,0);
-  const totalLast = compared.reduce((s,x)=>s+x.lwDone,0);
-  const diffTotal = totalThis - totalLast;
+  const focusSummary = topCatSummary(active, id => calcWeekRate(id, thisW.start, thisW.end));
+  const improved = compared.filter(x => x.diff > 0);
+  const declined = compared.filter(x => x.diff < 0);
 
-  const emoji = diffTotal > 0 ? '🎉' : diffTotal < 0 ? '😅' : '😊';
-  const summaryColor = diffTotal > 0 ? '#43e97b' : diffTotal < 0 ? '#e63946' : 'var(--gold)';
-  const summaryLine = diffTotal > 0
-    ? `지난 주보다 ${diffTotal}회 더 했어요!`
-    : diffTotal < 0
-    ? `지난 주보다 ${Math.abs(diffTotal)}회 덜 했어요`
-    : `지난 주랑 똑같이 했어요`;
-
-  const improved = compared.filter(x => x.diff > 0).map(x => x.name);
-  const declined = compared.filter(x => x.diff < 0).map(x => x.name);
-
-  const chips = (names, bg, color) => names.map(n =>
-    `<div class="wcmp-chip" style="background:${bg};color:${color}">${n}</div>`
+  const chips = (items, bg, color) => items.map(x =>
+    `<div class="wcmp-chip" style="background:${bg};color:${color}">${x.name} <span style="opacity:0.8;font-size:11px">${x.diff > 0 ? '+' : ''}${x.diff}회</span></div>`
   ).join('');
 
-  const group = (label, names, bg, color) => names.length ? `
+  const group = (label, items, bg, color) => items.length ? `
     <div class="wcmp-group">
       <div class="wcmp-group-label">${label}</div>
-      <div class="wcmp-chip-list">${chips(names, bg, color)}</div>
+      <div class="wcmp-chip-list">${chips(items, bg, color)}</div>
     </div>` : '';
 
   return `<div class="weekly-cmp-card">
-    <div style="font-size:12px;color:var(--text-dim)">이번 주 vs 지난 주</div>
-    <div class="wcmp-summary" style="color:${summaryColor}">${emoji} ${summaryLine}</div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">이번 주 vs 지난 주</div>
+    ${focusSummary}
     ${group('잘한 루틴 👍', improved, 'rgba(67,233,123,0.15)', '#43e97b')}
     ${group('아쉬운 루틴 😬', declined, 'rgba(230,57,70,0.12)', '#e63946')}
     ${!improved.length && !declined.length ? `<div style="font-size:13px;color:var(--text-dim)">루틴 변화가 없어요</div>` : ''}
@@ -1676,29 +1682,23 @@ function renderMonthlyCompare() {
   const totalLast = compared.reduce((s,x)=>s+x.lwDone,0);
   const diffTotal = totalThis - totalLast;
 
-  const emoji = diffTotal > 0 ? '🎉' : diffTotal < 0 ? '😅' : '😊';
-  const summaryColor = diffTotal > 0 ? '#43e97b' : diffTotal < 0 ? '#e63946' : 'var(--gold)';
-  const summaryLine = diffTotal > 0
-    ? `지난 달보다 ${diffTotal}회 더 했어요!`
-    : diffTotal < 0
-    ? `지난 달보다 ${Math.abs(diffTotal)}회 덜 했어요`
-    : `지난 달이랑 똑같이 했어요`;
+  const improved = compared.filter(x => x.diff > 0);
+  const declined = compared.filter(x => x.diff < 0);
 
-  const improved = compared.filter(x => x.diff > 0).map(x => x.name);
-  const declined = compared.filter(x => x.diff < 0).map(x => x.name);
+  const focusSummary = topCatSummary(active, id => calcMonthRate(id, ty, tm));
 
-  const chips = (names, bg, color) => names.map(n =>
-    `<div class="wcmp-chip" style="background:${bg};color:${color}">${n}</div>`
+  const chips = (items, bg, color) => items.map(x =>
+    `<div class="wcmp-chip" style="background:${bg};color:${color}">${x.name} <span style="opacity:0.8;font-size:11px">${x.diff > 0 ? '+' : ''}${x.diff}회</span></div>`
   ).join('');
-  const group = (label, names, bg, color) => names.length ? `
+  const group = (label, items, bg, color) => items.length ? `
     <div class="wcmp-group">
       <div class="wcmp-group-label">${label}</div>
-      <div class="wcmp-chip-list">${chips(names, bg, color)}</div>
+      <div class="wcmp-chip-list">${chips(items, bg, color)}</div>
     </div>` : '';
 
   return `<div class="weekly-cmp-card" style="margin-top:12px">
-    <div style="font-size:12px;color:var(--text-dim)">이번 달 vs 지난 달</div>
-    <div class="wcmp-summary" style="color:${summaryColor}">${emoji} ${summaryLine}</div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">이번 달 vs 지난 달</div>
+    ${focusSummary}
     ${group('잘한 루틴 👍', improved, 'rgba(67,233,123,0.15)', '#43e97b')}
     ${group('아쉬운 루틴 😬', declined, 'rgba(230,57,70,0.12)', '#e63946')}
     ${!improved.length && !declined.length ? `<div style="font-size:13px;color:var(--text-dim)">루틴 변화가 없어요</div>` : ''}
