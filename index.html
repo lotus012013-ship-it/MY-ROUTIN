@@ -491,10 +491,10 @@
   .chal-stamp-cell { position:relative; text-align:center; font-size:12px; padding:6px 2px; border-radius:8px; cursor:pointer; color:var(--text); transition:background 0.15s; min-height:36px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
   .chal-stamp-cell:active { background:rgba(255,255,255,0.1); }
   .chal-stamp-cell.stamped { background:rgba(255,200,0,0.15); color:var(--gold); font-weight:700; }
-  .chal-stamp-cell.in-period { background:rgba(108,99,255,0.16); border:1px solid rgba(108,99,255,0.35); }
-  .chal-stamp-cell.period-start { border-radius:14px 8px 8px 14px; border-left:3px solid #6c63ff; }
-  .chal-stamp-cell.period-end { border-radius:8px 14px 14px 8px; border-right:3px solid #6c63ff; }
-  .chal-stamp-cell.period-start.period-end { border-radius:14px; }
+  .chal-stamp-cell.in-period { background:rgba(108,99,255,0.24); border:1.5px solid rgba(108,99,255,0.62); box-shadow:inset 0 0 0 1px rgba(255,255,255,0.05); }
+  .chal-stamp-cell.period-start { border-radius:14px 8px 8px 14px; border-left:5px solid #8f88ff; background:rgba(108,99,255,0.34); box-shadow:0 0 0 1px rgba(143,136,255,0.55), inset 0 0 12px rgba(143,136,255,0.18); }
+  .chal-stamp-cell.period-end { border-radius:8px 14px 14px 8px; border-right:5px solid #8f88ff; background:rgba(108,99,255,0.34); box-shadow:0 0 0 1px rgba(143,136,255,0.55), inset 0 0 12px rgba(143,136,255,0.18); }
+  .chal-stamp-cell.period-start.period-end { border-radius:14px; border-left:5px solid #8f88ff; border-right:5px solid #8f88ff; }
   .chal-stamp-cell.stamp-min { background:rgba(160,120,60,0.15); color:#a07840; }
   .chal-stamp-cell.stamp-max { background:rgba(255,200,0,0.25); color:#ffe066; }
   .chal-stamp-cell.cal-today { border:1.5px solid var(--gold); border-radius:8px; }
@@ -660,6 +660,28 @@
     <div class="form-actions" style="margin-top:16px">
       <button class="btn btn-secondary" onclick="clearFailReason()">기록 지우기</button>
       <button class="btn btn-secondary" onclick="closeModal('fail-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHALLENGE DAY ACTION MODAL -->
+<div class="modal-overlay" id="challenge-day-modal">
+  <div class="modal">
+    <h3 id="challenge-day-title">챌린지 기록</h3>
+    <p id="challenge-day-sub" style="font-size:13px;color:var(--text-dim);margin-bottom:14px"></p>
+    <input type="hidden" id="challenge-day-id">
+    <input type="hidden" id="challenge-day-date">
+    <div id="challenge-day-status" style="font-size:13px;margin-bottom:12px"></div>
+    <div class="form-actions" style="gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="completeChallengeDayFromModal()">완료 기록</button>
+      <button class="btn btn-secondary" onclick="clearChallengeDayRecord()">기록 지우기</button>
+    </div>
+    <div style="margin-top:16px">
+      <div style="font-size:12px;font-weight:800;color:var(--text-dim);margin-bottom:8px">못한 이유</div>
+      <div class="fail-reason-grid" id="challenge-day-fail-grid"></div>
+    </div>
+    <div class="form-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('challenge-day-modal')">닫기</button>
     </div>
   </div>
 </div>
@@ -1472,6 +1494,7 @@ function completeChallenge(id, ds, value=true, memo='') {
   }
   recalcStats();
   maybeAwardChallengeXP(c);
+  maybeAutoAdvanceChallengeDuration(c);
   if(ds===today()) checkRankUp(getChallengeCategory(c), prev, state.character.stats[getChallengeCategory(c)]||0);
   checkTitleUnlock();
   if(ds===today()){spawnFloatingReward(null,'⚡ 챌린지!','lucky');}
@@ -2219,20 +2242,20 @@ function _chalStampCard(c){
 
   const targetChips=[];
   if(isPeriod){
-    targetChips.push(`<div style="flex:1;min-width:130px;background:rgba(108,99,255,0.12);border:1px solid rgba(108,99,255,0.35);border-radius:12px;padding:10px 12px">
-      <div style="font-size:10px;color:#a8a4ff;font-weight:700;margin-bottom:4px">목표기간</div>
-      <div style="font-size:14px;font-weight:800;color:var(--text)">${periodDays}일</div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:3px">${startDateStr} ~ ${endDateStr}</div>
+    targetChips.push(`<div style="flex:1 1 0;min-width:0;background:rgba(108,99,255,0.10);border:1px solid rgba(108,99,255,0.28);border-radius:10px;padding:7px 10px;font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+      <span style="color:#a8a4ff;font-weight:800">목표기간</span>
+      <span style="color:var(--text);font-weight:800;margin-left:6px">${periodDays}일</span>
+      <span style="margin-left:6px">${startDateStr} ~ ${endDateStr}</span>
     </div>`);
   }
   if(isCount||isMixed){
-    targetChips.push(`<div style="flex:1;min-width:120px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.35);border-radius:12px;padding:10px 12px">
-      <div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:4px">목표횟수</div>
-      <div style="font-size:14px;font-weight:800;color:var(--text)">${total}/${targetCount}회</div>
-      <div style="font-size:11px;color:${remainingCount===0?'var(--gold)':'var(--text-dim)'};margin-top:3px">${remainingCount===0?'완료':'잔여 '+remainingCount+'회'}</div>
+    targetChips.push(`<div style="flex:1 1 0;min-width:0;background:rgba(255,215,0,0.10);border:1px solid rgba(255,215,0,0.28);border-radius:10px;padding:7px 10px;font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+      <span style="color:var(--gold);font-weight:800">목표횟수</span>
+      <span style="color:var(--text);font-weight:800;margin-left:6px">${total}/${targetCount}회</span>
+      <span style="margin-left:6px;color:${remainingCount===0?'var(--gold)':'var(--text-dim)'}">${remainingCount===0?'완료':'잔여 '+remainingCount+'회'}</span>
     </div>`);
   }
-  const targetSummary=targetChips.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">${targetChips.join('')}</div>`:'';
+  const targetSummary=targetChips.length?`<div style="display:flex;gap:8px;flex-wrap:nowrap;margin:12px 0">${targetChips.join('')}</div>`:'';
 
   const offset=_chalCalOffset[c.id]||0;
   const now=new Date();
@@ -2263,9 +2286,8 @@ function _chalStampCard(c){
     const clickable=!future&&!beforeStart&&!afterPeriod;
     const canFail=!future&&!beforeStart&&!afterPeriod&&!isStamped;
     cells+=`<div class="chal-stamp-cell${inPeriod?' in-period':''}${isPeriodStart?' period-start':''}${isPeriodEnd?' period-end':''}${isStamped?' stamped':''}${lvl==='max'?' stamp-max':lvl==='min'?' stamp-min':''}${isToday?' cal-today':''}${!clickable?' cal-dim':''}"
-      ${clickable?`onclick="stampChallenge('${c.id}','${ds}')"`:''}>
+      ${clickable?`onclick="openChallengeDayModal('${c.id}','${ds}')"`:''}>
       ${d}${isStamped?`<span class="stamp-mark">${stampEmoji}</span>`:failObj?`<span class="stamp-mark" style="color:#e63946">${failObj.emoji}</span>`:''}
-      ${canFail?`<button class="chal-fail-btn" onclick="openFailModal('${c.id}',event,'${ds}','challenge')" title="못 한 이유 기록">📝</button>`:''}
     </div>`;
   }
 
@@ -2335,6 +2357,61 @@ function _chalStampCard(c){
 }
 function chalCalPrev(id){_chalCalOffset[id]=(_chalCalOffset[id]||0)-1;renderChallenge();}
 function chalCalNext(id){_chalCalOffset[id]=(_chalCalOffset[id]||0)+1;renderChallenge();}
+
+function refreshChallengeDayModal(){
+  const id=document.getElementById('challenge-day-id').value;
+  const ds=document.getElementById('challenge-day-date').value;
+  const c=state.challenges.find(x=>x.id===id);
+  if(!c) return;
+  const lvl=state.challengeLogs[id]?.[ds];
+  const failReason=getFailReason('challenge',id,ds);
+  const failObj=failReason?FAIL_REASONS.find(x=>x.id===failReason):null;
+  document.getElementById('challenge-day-status').innerHTML = lvl
+    ? '<div class="fail-tag" style="border-color:rgba(255,215,0,0.35);color:var(--gold)">'+(LEVEL_STAMP[lvl]||'⭐')+' 달성 기록됨</div>'
+    : failObj
+      ? '<div class="fail-tag">'+failObj.emoji+' '+failObj.label+'</div>'
+      : '<div style="color:var(--text-dim)">아직 기록이 없어요</div>';
+  document.getElementById('challenge-day-fail-grid').innerHTML = FAIL_REASONS.map(r=>
+    `<button class="fail-reason-btn${failReason===r.id?' selected':''}" onclick="selectChallengeDayFail('${r.id}')">${r.emoji}<span>${r.label}</span></button>`
+  ).join('');
+}
+function openChallengeDayModal(id, ds){
+  const c=state.challenges.find(x=>x.id===id); if(!c) return;
+  document.getElementById('challenge-day-id').value=id;
+  document.getElementById('challenge-day-date').value=ds;
+  document.getElementById('challenge-day-title').textContent=c.name;
+  document.getElementById('challenge-day-sub').textContent=ds+' 기록';
+  refreshChallengeDayModal();
+  openModal('challenge-day-modal');
+}
+function completeChallengeDayFromModal(){
+  const id=document.getElementById('challenge-day-id').value;
+  const ds=document.getElementById('challenge-day-date').value;
+  clearFailEntry('challenge',id,ds);
+  closeModal('challenge-day-modal');
+  stampChallenge(id,ds);
+}
+function selectChallengeDayFail(reasonId){
+  const id=document.getElementById('challenge-day-id').value;
+  const ds=document.getElementById('challenge-day-date').value;
+  const bucket=getFailBucket('challenge',ds,true);
+  bucket[id]=reasonId;
+  if(state.challengeLogs[id]) state.challengeLogs[id][ds]=false;
+  if(state.challengeMemos[id]) delete state.challengeMemos[id][ds];
+  recalcStats(); checkTitleUnlock(); save();
+  refreshChallengeDayModal();
+  renderToday(); renderChallenge(); renderChar(); renderCalendar(); renderMonthReport(); renderBreakdown();
+}
+function clearChallengeDayRecord(){
+  const id=document.getElementById('challenge-day-id').value;
+  const ds=document.getElementById('challenge-day-date').value;
+  if(state.challengeLogs[id]) state.challengeLogs[id][ds]=false;
+  if(state.challengeMemos[id]) delete state.challengeMemos[id][ds];
+  clearFailEntry('challenge',id,ds);
+  recalcStats(); checkTitleUnlock(); save();
+  refreshChallengeDayModal();
+  renderToday(); renderChallenge(); renderChar(); renderCalendar(); renderMonthReport(); renderBreakdown();
+}
 
 const LEVEL_STAMP = {min:'🥉', standard:'🥈', max:'🥇', true:'⭐'};
 const LEVEL_LABEL = {min:'최소달성', standard:'표준달성', max:'최대달성'};
@@ -2738,7 +2815,7 @@ function togglePastChallenge(challengeId, dateStr) {
   if(wasDone&&state.challengeMemos[challengeId]) delete state.challengeMemos[challengeId][dateStr];
   const prev=state.character.stats[getChallengeCategory(c)]||0;
   recalcStats();
-  if(!wasDone) maybeAwardChallengeXP(c);
+  if(!wasDone){ maybeAwardChallengeXP(c); maybeAutoAdvanceChallengeDuration(c); }
   if(!wasDone&&dateStr===today()) checkRankUp(getChallengeCategory(c), prev, state.character.stats[getChallengeCategory(c)]||0);
   checkTitleUnlock();
   save();
@@ -2934,6 +3011,21 @@ function isChallengeDurationUnlocked(days){
   const idx=CHALLENGE_DURATIONS.findIndex(d=>d.days===days);
   if(idx<=0) return true;
   return isChallengeDurationPassed(CHALLENGE_DURATIONS[idx-1].days);
+}
+function nextChallengeDuration(days){
+  const idx=CHALLENGE_DURATIONS.findIndex(d=>d.days===days);
+  return idx>=0&&idx<CHALLENGE_DURATIONS.length-1?CHALLENGE_DURATIONS[idx+1].days:null;
+}
+function maybeAutoAdvanceChallengeDuration(c){
+  if(!c || c.active===false || !(c.type==='period'||c.type==='mixed') || !c.duration) return false;
+  const next=nextChallengeDuration(c.duration);
+  if(!next) return false;
+  const done=challengePeriodDoneCount(c);
+  const need=challengeDurationThreshold(c.duration);
+  if(done<need) return false;
+  c.duration=next;
+  showToast('목표기간이 '+(CHALLENGE_DURATIONS.find(d=>d.days===next)?.label||next+'일')+'로 연장됐어요');
+  return true;
 }
 function firstUnlockedChallengeDuration(){
   let last=CHALLENGE_DURATIONS[0].days;
