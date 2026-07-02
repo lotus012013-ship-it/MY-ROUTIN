@@ -1,4 +1,4 @@
-const CACHE = 'routine-rpg-v6';
+const CACHE = 'routine-rpg-v31';
 const FILES = ['./', './index.html'];
 
 self.addEventListener('install', e => {

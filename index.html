@@ -49,6 +49,11 @@
   .header { margin-bottom: 20px; }
   .header h1 { font-size: 22px; font-weight: 700; }
   .header p { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+  .today-date-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .today-date-row h1 { flex:1; text-align:center; }
+  .date-nav-btn { width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .date-nav-btn:disabled { opacity:0.28; cursor:default; }
+  .today-jump-btn { margin-top:8px; border:1px solid var(--border); background:var(--surface); color:var(--text-dim); border-radius:16px; padding:4px 10px; font-size:11px; cursor:pointer; }
 
   /* TODAY SUMMARY */
   .today-summary {
@@ -65,29 +70,33 @@
     align-items: center; justify-content: center; font-size: 18px; font-weight: 700;
   }
   .ring-text span { font-size: 10px; color: var(--text-dim); font-weight: 400; }
-  .summary-info { flex: 1; }
+  .summary-info { flex: 1; min-width:0; }
   .summary-info h2 { font-size: 15px; font-weight: 700; }
-  .char-title-badge {
-    display: inline-block; margin-top: 4px; font-size: 11px; padding: 2px 10px;
-    background: var(--gold-dim); color: var(--gold); border-radius: 20px; border: 1px solid var(--gold);
-  }
   .summary-info p { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+  .today-cat-rates { display:grid; gap:7px; margin-top:10px; }
+  .today-cat-rate { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; font-size:11px; color:var(--text-dim); }
+  .today-cat-name { color:var(--text); font-weight:600; white-space:nowrap; }
+  .today-cat-bar { height:5px; border-radius:999px; background:rgba(255,255,255,0.08); overflow:hidden; }
+  .today-cat-fill { height:100%; border-radius:999px; transition:width 0.3s; }
+  .today-cat-pct { font-weight:700; color:var(--text); min-width:34px; text-align:right; }
+  .energy-board { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:8px 10px; margin-bottom:12px; }
+  .energy-row { display:flex; align-items:flex-start; gap:8px; padding:5px 0; }
+  .energy-row + .energy-row { border-top:1px solid var(--border); }
+  .energy-label { width:74px; flex-shrink:0; font-size:11px; font-weight:700; color:var(--text); line-height:1.25; }
+  .energy-emojis { flex:1; min-height:20px; display:flex; align-items:center; flex-wrap:wrap; gap:4px; font-size:17px; line-height:1.15; }
+  .energy-empty { font-size:11px; color:var(--text-dim); }
+  .growth-card { flex:1; min-width:0; }
+  .growth-main { display:flex; align-items:center; gap:8px; }
+  .growth-plant { width:32px; height:32px; border-radius:11px; display:flex; align-items:center; justify-content:center; background:rgba(67,233,123,0.10); font-size:21px; flex-shrink:0; }
+  .growth-title { font-size:12px; font-weight:800; color:var(--text); }
+  .growth-sub { font-size:10px; color:var(--text-dim); margin-top:1px; }
+  .growth-bar { height:4px; border-radius:999px; background:rgba(255,255,255,0.08); overflow:hidden; margin-top:6px; }
+  .growth-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#43e97b,#ffd700); transition:width 0.3s; }
+  .growth-next { font-size:10px; color:var(--text-dim); margin-top:4px; }
+  .routine-emoji { width:24px; height:24px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:rgba(255,255,255,0.06); font-size:15px; }
+  .emoji-input-row { display:grid; grid-template-columns:72px 1fr; gap:8px; align-items:center; }
 
-  /* EVENT BANNER */
-  .event-banner {
-    border-radius: 16px; padding: 12px 16px; margin-bottom: 16px;
-    display: flex; align-items: center; gap: 12px;
-    border: 1px solid; animation: pulse-border 2s ease-in-out infinite;
-  }
-  @keyframes pulse-border {
-    0%,100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
-    50%      { box-shadow: 0 0 0 4px rgba(255,215,0,0.15); }
-  }
-  .event-icon { font-size: 28px; }
-  .event-text h4 { font-size: 14px; font-weight: 700; }
-  .event-text p  { font-size: 12px; margin-top: 2px; }
-
-  /* MYSTERY ROUTINE highlight */
+  /* ROUTINE CARDS */
   .routine-card {
     background: var(--surface); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px;
     display: flex; align-items: center; gap: 12px;
@@ -96,21 +105,6 @@
   }
   .routine-card.done { opacity: 0.45; border-color: var(--border); }
   .routine-card.done .routine-name { text-decoration: line-through; }
-  .routine-card.mystery {
-    border-color: var(--gold) !important;
-    background: linear-gradient(135deg, var(--surface) 60%, #2a2000 100%);
-  }
-  .routine-card.mystery::before {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.06), transparent);
-    animation: shimmer 2s infinite;
-  }
-  @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
-  .mystery-badge {
-    position: absolute; top: 6px; right: 8px;
-    font-size: 10px; font-weight: 700; color: var(--gold);
-    background: var(--gold-dim); padding: 1px 6px; border-radius: 10px;
-  }
   .check-circle {
     width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border);
     display: flex; align-items: center; justify-content: center;
@@ -120,7 +114,7 @@
   .routine-card.failed .check-circle { background: rgba(230,57,70,0.15); border-color: #e63946; color: #e63946; }
   .routine-card.failed .routine-name { text-decoration: line-through; color: var(--text-dim); }
   .routine-info { flex: 1; }
-  .routine-name { font-size: 14px; font-weight: 500; }
+  .routine-name { font-size: 14px; font-weight: 500; display:flex; align-items:center; gap:8px; }
   .routine-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
   .routine-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
 
@@ -186,19 +180,6 @@
   .milestone-sub { font-size: 15px; color: var(--text-dim); }
   .milestone-close { margin-top: 24px; background: var(--gold); color: #000; border: none; border-radius: 14px; padding: 12px 36px; font-size: 16px; font-weight: 700; cursor: pointer; }
 
-  /* JACKPOT OVERLAY */
-  .jackpot-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.9); z-index: 450;
-    align-items: center; justify-content: center; flex-direction: column;
-  }
-  .jackpot-overlay.open { display: flex; }
-  .jackpot-box { text-align: center; animation: pop 0.35s ease; }
-  .jackpot-slots { font-size: 48px; margin-bottom: 16px; letter-spacing: 12px; }
-  .jackpot-title { font-size: 36px; font-weight: 900; background: linear-gradient(90deg,#ff6b6b,#ffd700,#43e97b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-  .jackpot-reward { font-size: 20px; color: var(--gold); margin-top: 8px; }
-  .jackpot-close { margin-top: 24px; background: linear-gradient(90deg,#ff6b6b,#ffd700); color: #000; border: none; border-radius: 14px; padding: 12px 36px; font-size: 16px; font-weight: 700; cursor: pointer; }
-
   /* PARTICLES */
   .particle {
     position: fixed; border-radius: 50%; pointer-events: none; z-index: 490;
@@ -235,13 +216,23 @@
   .bundle-body .routine-card:last-child { border-bottom: none; }
 
   /* CHALLENGE */
-  .challenge-card { background:var(--gold-dim); border:1px solid rgba(255,215,0,0.3); border-radius:14px; padding:14px 16px; margin-bottom:8px; }
-  .challenge-card-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-  .challenge-card-header h4 { font-size:14px; font-weight:600; flex:1; }
-  .challenge-done-btn { font-size:11px; padding:4px 10px; background:var(--gold); color:#000; border:none; border-radius:20px; cursor:pointer; font-weight:700; }
-  .challenge-bar { height:6px; background:rgba(255,215,0,0.2); border-radius:3px; overflow:hidden; }
+  .challenge-card { background:var(--gold-dim); border:1px solid rgba(255,215,0,0.3); border-radius:10px; padding:10px 12px; margin-bottom:7px; }
+  .challenge-card.done { background:rgba(255,255,255,0.045); border-color:rgba(255,255,255,0.12)!important; opacity:0.82; }
+  .challenge-card.done .challenge-card-header h4, .challenge-card.done .challenge-info { color:var(--text-dim); }
+  .challenge-card.done .check-circle { background:var(--gold); border-color:var(--gold); color:#000; }
+  .challenge-card-header { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .challenge-card-header h4 { font-size:13px; font-weight:600; flex:1; line-height:1.25; }
+  .challenge-done-btn { font-size:10px; padding:3px 8px; background:var(--gold); color:#000; border:none; border-radius:14px; cursor:pointer; font-weight:700; white-space:nowrap; }
+  .challenge-bar { height:4px; background:rgba(255,215,0,0.18); border-radius:3px; overflow:hidden; }
   .challenge-bar-fill { height:100%; background:var(--gold); border-radius:3px; transition:width 0.3s; }
-  .challenge-info { display:flex; justify-content:space-between; margin-top:6px; font-size:11px; color:var(--text-dim); }
+  .challenge-info { display:flex; justify-content:space-between; margin-top:5px; font-size:10.5px; color:var(--text-dim); }
+  .challenge-level-box { background:rgba(255,255,255,0.045); border:1px solid var(--border); border-radius:12px; padding:9px 10px; margin:10px 0; }
+  .challenge-level-top { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; }
+  .challenge-level-name { font-weight:800; color:var(--text); }
+  .challenge-xp-text { color:var(--text-dim); font-size:11px; }
+  .challenge-xp-bar { height:5px; border-radius:999px; background:rgba(255,255,255,0.08); overflow:hidden; margin-top:7px; }
+  .challenge-xp-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#6c63ff,#ffd700); }
+  .challenge-result-chip { font-size:11px; padding:2px 8px; border-radius:20px; font-weight:800; }
 
   /* CHARACTER */
   .char-hero {
@@ -369,10 +360,10 @@
   .stamp-star-mood { dominant-baseline:middle; }
   .stamp-mood { font-size:13px; line-height:1; transform:rotate(15deg); display:inline-block; }
   .stamp-mood-only { font-size:16px; line-height:1; }
-  .streak-row { display:flex; gap:12px; margin-bottom:20px; }
-  .streak-card { flex:1; background:var(--surface); border-radius:16px; padding:16px; border:1px solid var(--border); text-align:center; }
-  .streak-val   { font-size:28px; font-weight:700; color:var(--gold); }
-  .streak-label { font-size:12px; color:var(--text-dim); margin-top:4px; }
+  .streak-row { display:flex; gap:10px; margin-bottom:16px; }
+  .streak-card { flex:1; background:var(--surface); border-radius:12px; padding:10px 12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .streak-val   { font-size:20px; font-weight:700; color:var(--gold); }
+  .streak-label { font-size:12px; color:var(--text-dim); }
   .cat-breakdown { background:var(--surface); border-radius:20px; padding:20px; border:1px solid var(--border); }
   .cat-breakdown h3 { font-size:15px; font-weight:600; margin-bottom:16px; }
   .breakdown-item { margin-bottom:14px; }
@@ -396,8 +387,8 @@
   .challenge-manage-card { background:var(--gold-dim); border-radius:14px; padding:12px 16px; margin-bottom:8px; display:flex; align-items:center; gap:12px; border:1px solid rgba(255,215,0,0.3); }
   .drag-handle { font-size:18px; color:var(--text-dim); cursor:grab; padding:4px 6px; touch-action:none; flex-shrink:0; }
   .drag-handle:active { cursor:grabbing; }
-  .routine-manage-card.drag-over { border-color:var(--gold); background:rgba(255,215,0,0.08); }
-  .routine-manage-card.dragging { opacity:0.4; }
+  .routine-manage-card.drag-over,.challenge-manage-card.drag-over { border-color:var(--gold); background:rgba(255,215,0,0.08); }
+  .routine-manage-card.dragging,.challenge-manage-card.dragging { opacity:0.4; }
 
   /* DAY DETAIL */
   .day-detail-row {
@@ -474,8 +465,9 @@
   .btn-secondary { background:var(--surface2); color:var(--text-dim); }
   .btn-danger    { background:#3d1f1f; color:var(--health); border:1px solid var(--health); }
   .select-group { display:flex; gap:8px; flex-wrap:wrap; }
-  .select-btn { padding:8px 16px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--text-dim); cursor:pointer; font-size:13px; font-family:inherit; transition:all 0.2s; }
+  .select-btn { padding:8px 16px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--text-dim); cursor:pointer; font-size:13px; font-family:inherit; transition:all 0.2s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   .select-btn.selected { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
+  .select-btn.locked { opacity:0.38; cursor:not-allowed; border-style:dashed; }
 
   /* TOAST */
   .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:10px 20px; font-size:13px; z-index:300; opacity:0; transition:opacity 0.3s; white-space:nowrap; max-width:90%; }
@@ -492,6 +484,23 @@
   .rankup-close { margin-top:28px; background:var(--gold); color:#000; border:none; border-radius:14px; padding:12px 36px; font-size:16px; font-weight:700; cursor:pointer; }
 
   .empty-state { text-align:center; padding:30px; color:var(--text-dim); font-size:14px; }
+
+  /* 챌린지 스탬프 달력 */
+  .chal-stamp-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+  .chal-dow { text-align:center; font-size:10px; color:var(--text-dim); padding:2px 0; }
+  .chal-stamp-cell { position:relative; text-align:center; font-size:12px; padding:6px 2px; border-radius:8px; cursor:pointer; color:var(--text); transition:background 0.15s; min-height:36px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+  .chal-stamp-cell:active { background:rgba(255,255,255,0.1); }
+  .chal-stamp-cell.stamped { background:rgba(255,200,0,0.15); color:var(--gold); font-weight:700; }
+  .chal-stamp-cell.in-period { background:rgba(108,99,255,0.16); border:1px solid rgba(108,99,255,0.35); }
+  .chal-stamp-cell.period-start { border-radius:14px 8px 8px 14px; border-left:3px solid #6c63ff; }
+  .chal-stamp-cell.period-end { border-radius:8px 14px 14px 8px; border-right:3px solid #6c63ff; }
+  .chal-stamp-cell.period-start.period-end { border-radius:14px; }
+  .chal-stamp-cell.stamp-min { background:rgba(160,120,60,0.15); color:#a07840; }
+  .chal-stamp-cell.stamp-max { background:rgba(255,200,0,0.25); color:#ffe066; }
+  .chal-stamp-cell.cal-today { border:1.5px solid var(--gold); border-radius:8px; }
+  .chal-stamp-cell.cal-dim { color:var(--text-dim); opacity:0.35; cursor:default; pointer-events:none; }
+  .stamp-mark { font-size:13px; line-height:1; }
+  .chal-fail-btn { position:absolute; right:1px; bottom:1px; width:17px; height:17px; border:none; border-radius:50%; background:rgba(230,57,70,0.16); color:#ff8a8a; font-size:10px; line-height:17px; padding:0; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -499,7 +508,12 @@
 <!-- TODAY -->
 <div id="screen-today" class="screen active">
   <div class="header">
-    <h1 id="today-date"></h1>
+    <div class="today-date-row">
+      <button class="date-nav-btn" onclick="moveTodayDate(-1)" title="이전 날짜">‹</button>
+      <h1 id="today-date"></h1>
+      <button class="date-nav-btn" id="today-next-btn" onclick="moveTodayDate(1)" title="다음 날짜">›</button>
+    </div>
+    <button class="today-jump-btn" id="today-jump-btn" onclick="goTodayDate()" style="display:none">오늘로</button>
     <p id="today-greeting"></p>
   </div>
   <div class="today-summary">
@@ -510,33 +524,21 @@
       </svg>
       <div class="ring-text"><strong id="ring-pct">0%</strong><span>완료</span></div>
     </div>
-    <div class="summary-info" style="flex:1">
-      <h2 id="char-display-name">내 캐릭터</h2>
-      <div class="char-title-badge" id="today-char-title">새내기 루티너</div>
-      <p id="today-done-count" style="margin-top:8px">0 / 0 완료</p>
+    <div class="summary-info">
+      <h2>오늘의 카테고리 달성률</h2>
+      <p id="today-done-count">0 / 0 완료</p>
+      <div class="today-cat-rates" id="today-cat-rates"></div>
     </div>
   </div>
+  <div class="energy-board" id="energy-board">
+    <div class="energy-row"><div class="energy-label">오늘 에너지</div><div class="energy-emojis" id="today-energy"></div></div>
+    <div class="energy-row"><div class="energy-label">이번 주 성장</div><div class="growth-card" id="week-growth"></div></div>
+  </div>
   <div class="mood-bar" id="mood-bar"></div>
-  <div id="event-banner-wrap"></div>
   <div id="routine-list"></div>
 </div>
 
 <!-- CHARACTER -->
-<div id="screen-char" class="screen">
-  <div class="header"><h1>캐릭터</h1><p>루틴마다 다른 스탯이 자라요</p></div>
-  <div class="char-hero">
-    <div class="char-main-title" id="char-main-title">칭호</div>
-    <div class="char-sub-desc" id="char-sub-desc"></div>
-  </div>
-  <div id="habit-card"></div>
-  <div class="stat-ranks" id="stat-ranks"></div>
-  <div class="title-collection">
-    <h3>🏆 칭호 수집</h3>
-    <p>달성 조건을 채우면 칭호가 해금돼요</p>
-    <div class="title-grid" id="title-grid"></div>
-  </div>
-</div>
-
 <!-- RECORDS -->
 <div id="screen-records" class="screen">
   <div class="header"><h1>기록</h1></div>
@@ -555,11 +557,19 @@
     <h3>카테고리별 달성률</h3>
     <div id="breakdown-list"></div>
   </div>
+  <div id="compare-cards"></div>
   <div class="month-report-card" id="month-report-card"></div>
   <div class="cat-breakdown" style="margin-top:16px">
     <h3 id="fail-analysis-header">📊 실패 분석</h3>
     <div id="fail-analysis"></div>
   </div>
+</div>
+
+<!-- CHALLENGE -->
+<div id="screen-challenge" class="screen">
+  <div class="header"><h1>⚡ 챌린지</h1></div>
+  <div id="challenge-tab-body"></div>
+  <button class="add-btn" onclick="openAddChallenge()" style="margin-top:8px">+ 챌린지 추가</button>
 </div>
 
 <!-- MANAGE -->
@@ -584,7 +594,7 @@
 
 <nav class="nav">
   <button class="nav-btn active" onclick="showScreen('today',this)"><span class="icon">☀️</span>오늘</button>
-  <button class="nav-btn" onclick="showScreen('char',this)"><span class="icon">🧙</span>캐릭터</button>
+  <button class="nav-btn" onclick="showScreen('challenge',this)"><span class="icon">⚡</span>챌린지</button>
   <button class="nav-btn" onclick="showScreen('records',this)"><span class="icon">📊</span>기록</button>
   <button class="nav-btn" onclick="showScreen('manage',this)"><span class="icon">⚙️</span>관리</button>
 </nav>
@@ -595,6 +605,7 @@
     <h3 id="routine-modal-title">루틴 추가</h3>
     <input type="hidden" id="edit-routine-id">
     <div class="form-group"><label>루틴 이름</label><input type="text" id="routine-name-input" placeholder="예: 영양제 먹기"></div>
+    <div class="form-group"><label>이모지</label><div class="emoji-input-row"><input type="text" id="routine-emoji-input" placeholder="예: 💊" maxlength="4"><span style="font-size:12px;color:var(--text-dim)">비워두면 이름에 맞춰 자동 선택</span></div></div>
     <div class="form-group"><label>그룹 (선택)</label>
       <div class="select-group" id="group-select">
         <button class="select-btn selected" data-val="" onclick="selectGroup(this)">없음</button>
@@ -608,6 +619,8 @@
     <div class="form-group"><label>주기</label>
       <div class="select-group" id="freq-select">
         <button class="select-btn selected" data-val="daily" onclick="selectFreq(this)">매일</button>
+        <button class="select-btn" data-val="weekday" onclick="selectFreq(this)">평일</button>
+        <button class="select-btn" data-val="weekend" onclick="selectFreq(this)">주말</button>
         <button class="select-btn" data-val="weekly6" onclick="selectFreq(this)">주 6회</button>
         <button class="select-btn" data-val="weekly5" onclick="selectFreq(this)">주 5회</button>
         <button class="select-btn" data-val="weekly4" onclick="selectFreq(this)">주 4회</button>
@@ -639,9 +652,10 @@
 <!-- FAIL REASON MODAL -->
 <div class="modal-overlay" id="fail-modal">
   <div class="modal">
-    <h3>오늘 못 한 이유가 뭐예요?</h3>
+    <h3 id="fail-modal-title">오늘 못 한 이유가 뭐예요?</h3>
     <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">자책 말고, 데이터로 남겨봐요 📊</p>
-    <input type="hidden" id="fail-routine-id">
+    <input type="hidden" id="fail-item-id">
+    <input type="hidden" id="fail-item-type" value="routine">
     <div class="fail-reason-grid" id="fail-reason-grid"></div>
     <div class="form-actions" style="margin-top:16px">
       <button class="btn btn-secondary" onclick="clearFailReason()">기록 지우기</button>
@@ -695,24 +709,49 @@
     <h3 id="challenge-modal-title">챌린지 추가</h3>
     <input type="hidden" id="edit-challenge-id">
     <div class="form-group"><label>챌린지 이름</label><input type="text" id="challenge-name-input" placeholder="예: 밀가루 2주 금지"></div>
+    <div class="form-group"><label>카테고리</label>
+      <div class="select-group" id="chal-cat-select"></div>
+    </div>
+    <div class="form-group"><label>달성 방식</label>
+      <div class="select-group" id="chal-achieve-select">
+        <button type="button" class="select-btn selected" data-val="simple" onclick="selectAchieveMode(this)">✅ 단순 체크</button>
+        <button type="button" class="select-btn" data-val="levels" onclick="selectAchieveMode(this)">🏅 3단계 달성</button>
+      </div>
+    </div>
+    <div id="chal-level-desc-section" style="display:none">
+      <div class="form-group"><label>🥉 최소달성 기준</label><input type="text" id="level-desc-min" placeholder="예: 10분이라도 했다" maxlength="40" style="width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;"></div>
+      <div class="form-group"><label>🥈 표준달성 기준</label><input type="text" id="level-desc-standard" placeholder="예: 목표 분량 완료" maxlength="40" style="width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;"></div>
+      <div class="form-group"><label>🥇 최대달성 기준</label><input type="text" id="level-desc-max" placeholder="예: 추가로 더 했다" maxlength="40" style="width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;"></div>
+    </div>
     <div class="form-group"><label>유형</label>
       <div class="select-group" id="chal-type-select">
         <button class="select-btn selected" data-val="period" onclick="selectChalType(this)">📅 기간</button>
         <button class="select-btn" data-val="count" onclick="selectChalType(this)">🔢 횟수</button>
+        <button class="select-btn" data-val="mixed" onclick="selectChalType(this)">🎯 기간+횟수</button>
       </div>
     </div>
     <div id="chal-period-section" class="form-group"><label>기간</label>
-      <div class="select-group" id="duration-select">
-        <button class="select-btn selected" data-val="7" onclick="selectDuration(this)">1주일</button>
-        <button class="select-btn" data-val="14" onclick="selectDuration(this)">2주일</button>
-        <button class="select-btn" data-val="21" onclick="selectDuration(this)">3주일</button>
-        <button class="select-btn" data-val="30" onclick="selectDuration(this)">1개월</button>
-        <button class="select-btn" data-val="60" onclick="selectDuration(this)">2개월</button>
-        <button class="select-btn" data-val="90" onclick="selectDuration(this)">3개월</button>
-      </div>
+      <div class="select-group" id="duration-select"></div>
     </div>
     <div id="chal-count-section" class="form-group" style="display:none"><label>목표 횟수</label>
       <input type="number" id="challenge-count-input" min="1" max="9999" value="10" placeholder="예: 30" style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;">
+    </div>
+    <div id="chal-mixed-section" style="display:none">
+      <div class="form-group"><label>기간</label>
+        <div class="select-group" id="duration-select-mixed"></div>
+      </div>
+      <div class="form-group"><label>기간 내 최소 달성 횟수</label>
+        <input type="number" id="challenge-mixed-count-input" min="1" max="9999" value="5" placeholder="예: 10" style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;">
+      </div>
+    </div>
+    <div class="form-group"><label>시작일</label>
+      <input type="date" id="challenge-start-input" style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;">
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;color:var(--text);font-size:14px;cursor:pointer">
+        <input type="checkbox" id="challenge-memo-enabled" checked style="width:auto">
+        완료할 때 한줄 기록 남기기
+      </label>
     </div>
     <div class="form-actions">
       <button class="btn btn-secondary" onclick="closeModal('challenge-modal')">취소</button>
@@ -724,6 +763,39 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- CHALLENGE LEVEL PICKER -->
+<div class="modal-overlay" id="challenge-level-modal">
+  <div class="modal">
+    <h3>달성 수준 선택</h3>
+    <input type="hidden" id="level-challenge-id">
+    <input type="hidden" id="level-challenge-ds">
+    <div style="display:flex;flex-direction:column;gap:10px;margin:8px 0 20px">
+      <button onclick="selectChalLevel('min')"  style="padding:14px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;cursor:pointer;text-align:left">🥉 최소달성 <span style="font-size:12px;color:var(--text-dim);margin-left:6px">최소한 했어요</span></button>
+      <button onclick="selectChalLevel('standard')" style="padding:14px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;cursor:pointer;text-align:left">🥈 표준달성 <span style="font-size:12px;color:var(--text-dim);margin-left:6px">목표대로 했어요</span></button>
+      <button onclick="selectChalLevel('max')"  style="padding:14px;border-radius:14px;border:1.5px solid var(--gold);background:rgba(255,200,0,0.08);color:var(--gold);font-size:15px;cursor:pointer;text-align:left">🥇 최대달성 <span style="font-size:12px;color:var(--text-dim);margin-left:6px">최고로 잘했어요</span></button>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('challenge-level-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHALLENGE MEMO -->
+<div class="modal-overlay" id="challenge-memo-modal">
+  <div class="modal">
+    <h3>오늘 기록</h3>
+    <input type="hidden" id="memo-challenge-id">
+    <div class="form-group"><label>한줄 기록 <span style="color:var(--text-dim);font-weight:400;font-size:12px">(오늘 챌린지를 어떻게 실천했나요?)</span></label>
+      <input type="text" id="challenge-memo-input" placeholder="예: 밀가루 안 먹고 현미밥으로 대체했어요" maxlength="80" style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:15px;">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('challenge-memo-modal')">취소</button>
+      <button class="btn btn-secondary" id="challenge-memo-skip-btn" onclick="saveChallengeMemo(true)" style="display:none">건너뛰기</button>
+      <button class="btn btn-primary" onclick="saveChallengeMemo()">완료</button>
+    </div>
+  </div>
+</div>
+
 <!-- MILESTONE -->
 <div class="milestone-overlay" id="milestone-overlay" onclick="closeMilestone()">
   <div class="milestone-box">
@@ -731,16 +803,6 @@
     <div class="milestone-title" id="milestone-title"></div>
     <div class="milestone-sub" id="milestone-sub"></div>
     <button class="milestone-close" onclick="closeMilestone()">계속하기</button>
-  </div>
-</div>
-
-<!-- JACKPOT -->
-<div class="jackpot-overlay" id="jackpot-overlay" onclick="closeJackpot()">
-  <div class="jackpot-box">
-    <div class="jackpot-slots" id="jackpot-slots">🎰🎰🎰</div>
-    <div class="jackpot-title">JACKPOT!</div>
-    <div class="jackpot-reward" id="jackpot-reward"></div>
-    <button class="jackpot-close" onclick="closeJackpot()">🎉 받기!</button>
   </div>
 </div>
 
@@ -799,10 +861,10 @@ function catIcon(id)  { return getCat(id).icon; }
 const FAIL_REASONS = [
   {id:'condition', label:'컨디션 문제',  emoji:'🤒'},
   {id:'external',  label:'외부 요인',   emoji:'🌧️'},
-  {id:'plan',      label:'약속 있음',   emoji:'📅'},
+  {id:'plan',      label:'자의적 선택',  emoji:'🙋'},
   {id:'etc',       label:'그냥 못 함',  emoji:'🤷'},
   {id:'impulse',   label:'충동적 요인', emoji:'⚡'},
-  {id:'notime',    label:'시간 없음',   emoji:'⏰'},
+  {id:'notime',    label:'의지 없음',   emoji:'😑'},
 ];
 
 const MOODS = [
@@ -831,42 +893,19 @@ const DEFAULT_ROUTINES = [
   {id:'r15',name:'7시간 이상 수면',     category:'health', freq:'daily',   group:'night', identity:'나는 회복을 두려워하지 않는 사람이다'},
 ];
 
-// ── RANDOM REWARD TABLE ───────────────────────────
-// 체크할 때마다 이 테이블에서 랜덤 추첨
-const REWARD_TABLE = [
-  {pts:1,  label:'+1',         emoji:'',   type:'normal',  weight:55},
-  {pts:2,  label:'+2',         emoji:'',   type:'normal',  weight:25},
-  {pts:3,  label:'+3 ✨',      emoji:'',   type:'lucky',   weight:10},
-  {pts:5,  label:'+5 🔥',      emoji:'',   type:'great',   weight:7},
-  {pts:10, label:'+10 💥',     emoji:'',   type:'jackpot', weight:2},
-  {pts:20, label:'+20 🌈',     emoji:'',   type:'jackpot', weight:1},
-];
-const TOTAL_WEIGHT = REWARD_TABLE.reduce((s,r)=>s+r.weight,0);
-
-// 오늘의 이벤트 (날짜 기반 랜덤, 하루 고정)
-const EVENTS = [
-  {id:'double', label:'🌟 황금 데이', desc:'오늘은 모든 보상 2배!',  color:'#3d3200', borderColor:'var(--gold)',    mult:2},
-  {id:'triple', label:'💎 레전드 데이',desc:'오늘은 모든 보상 3배!', color:'#1f0e3d', borderColor:'#a78bfa',       mult:3},
-  {id:'mystery',label:'🎲 럭키 데이', desc:'오늘은 보상이 예측불가!',color:'#0e3d2a', borderColor:'var(--life)',   mult:1},
-  {id:'normal', label:null, desc:null, color:null, borderColor:null, mult:1},
-  {id:'normal', label:null, desc:null, color:null, borderColor:null, mult:1},
-  {id:'normal', label:null, desc:null, color:null, borderColor:null, mult:1},
-  {id:'normal', label:null, desc:null, color:null, borderColor:null, mult:1},
-];
-
 // ── STATE ─────────────────────────────────────────
 let state = {
   routines: [],
   challenges: [],
   logs: {},
   challengeLogs: {},
+  challengeMemos: {},
+  challengeFailLogs: {},
   character: {
     name: '내 캐릭터',
     stats: {health:0, growth:0, life:0},
     unlockedTitles: ['beginner'],
   },
-  mysteryRoutineId: null,  // 오늘의 황금 루틴
-  mysteryDate: null,
   shownMilestones: {},     // { 'YYYY-MM-DD_50': true }
   failLogs: {},            // { 'YYYY-MM-DD': { routineId: 'reasonId' } }
 };
@@ -879,16 +918,52 @@ function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+let todayViewDate = null;
+function getTodayViewDate(){ return todayViewDate || today(); }
+function dateFromStr(ds){ return new Date((ds||today())+'T00:00:00'); }
+function fmtDate(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function moveTodayDate(delta){
+  const d=dateFromStr(getTodayViewDate());
+  d.setDate(d.getDate()+delta);
+  const next=fmtDate(d);
+  if(next>today()) return;
+  todayViewDate=next;
+  renderToday(); renderMoodBar();
+}
+function goTodayDate(){ todayViewDate=today(); renderToday(); renderMoodBar(); }
 
 // ── STORAGE ───────────────────────────────────────
 function save() { localStorage.setItem('routine_rpg_v4', JSON.stringify(state)); }
 function load() {
   const raw = localStorage.getItem('routine_rpg_v4');
   if (raw) { try { const s=JSON.parse(raw); state={...state,...s}; } catch(e){} }
-  else { state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES)); }
+  else { const seed={"routines":[{"id":"r1","name":"영양제 먹기","category":"health","freq":"daily","group":"","identity":"나는 내 몸을 챙기는 사람이다"},{"id":"r2","name":"운동하기","category":"health","freq":"weekly3","group":"","identity":"나는 내 몸을 다시 믿는 사람이다"},{"id":"r3","name":"간식·음료·우유 금지","category":"health","freq":"daily","group":"","identity":"나는 내 욕구를 다스리는 사람이다"},{"id":"r4","name":"밀가루 금지","category":"health","freq":"daily","group":"","identity":"나는 내 몸에 진심인 사람이다"},{"id":"r5","name":"독서 1페이지","category":"growth","freq":"daily","group":"","identity":"나는 매일 조금씩 성장하는 사람이다"},{"id":"r6","name":"글쓰기","category":"growth","freq":"daily","group":"","identity":"나는 내 경험을 자산으로 만드는 사람이다"},{"id":"r7","name":"목표 확인하기","category":"growth","freq":"daily","group":"","identity":"나는 방향을 잃지 않는 사람이다"},{"id":"r8","name":"주가 확인하기","category":"growth","freq":"daily","group":"","identity":"나는 조용히 미래를 준비하는 사람이다"},{"id":"r9","name":"눕기 전 씻기","category":"life","freq":"daily","group":"night","identity":"나는 나를 방치하지 않는 사람이다"},{"id":"r10","name":"방 정리하기","category":"life","freq":"daily","group":"","identity":"나는 내 공간을 존중하는 사람이다"},{"id":"r11","name":"괄사하기","category":"health","freq":"daily","group":"night","identity":"나는 내 몸을 정성껏 돌보는 사람이다"},{"id":"r12","name":"스마트워치 차기","category":"health","freq":"daily","group":"night","identity":"나는 내 건강을 기록하는 사람이다"},{"id":"r13","name":"명상하기","category":"health","freq":"daily","group":"night","identity":"나는 내 멘탈을 회복시키는 사람이다"},{"id":"r14","name":"11시 취침","category":"health","freq":"daily","group":"night","identity":"나는 내일을 위해 오늘을 마무리하는 사람이다"},{"id":"r15","name":"7시간 이상 수면","category":"health","freq":"daily","group":"night","identity":"나는 회복을 두려워하지 않는 사람이다"}],"challenges":[],"categories":[{"id":"health","name":"건강","icon":"❤️","color":"#ff6b6b","abilityName":"체력"},{"id":"growth","name":"자기개발","icon":"🧠","color":"#6c63ff","abilityName":"실력"},{"id":"life","name":"생활습관","icon":"🌿","color":"#43e97b","abilityName":"자기관리"}],"character":{"name":"내 캐릭터","stats":{"health":7,"growth":3,"life":0},"unlockedTitles":["beginner"]},"_logsReset1":true};
+    state={...state,...seed}; }
   if (!state.shownMilestones) state.shownMilestones = {};
   if (!state.failLogs) state.failLogs = {};
+  if (!state.challengeFailLogs) state.challengeFailLogs = {};
+  if (!state.challengeAwards) state.challengeAwards = {};
   if (!state.moods) state.moods = {};
+  // 일회성 기록 리셋
+  if (!state._logsReset1) {
+    state.logs = {};
+    state.failLogs = {};
+    state.challengeFailLogs = {};
+    state.moods = {};
+    state.shownMilestones = {};
+    state._logsReset1 = true;
+    save();
+  }
+  if (!state.challengeMemos) state.challengeMemos = {};
+  if (!state.challengeFailLogs) state.challengeFailLogs = {};
+  state.challenges.forEach(c=>{ if(!c.category) c.category=getCats()[0]?.id||'health'; if(c.memoEnabled===undefined)c.memoEnabled=true; });
+  // 루틴 로그가 전혀 없는 월의 고아 failLog 정리
+  Object.keys(state.failLogs).forEach(date => {
+    if (!state.logs[date] || !Object.keys(state.logs[date]).length) {
+      // 해당 날 완료 루틴이 하나도 없으면 failLog 삭제
+      delete state.failLogs[date];
+    }
+  });
   if (!state.categories) state.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
   // migrate: add abilityName to existing categories that don't have it
   state.categories.forEach(c => {
@@ -898,53 +973,80 @@ function load() {
     }
   });
   recalcStats();
-  // identity 필드 없는 기존 루틴에 자동 보충
+  // identity/emoji 필드 없는 기존 루틴에 자동 보충
   state.routines.forEach(r => {
-    if (!r.identity) {
-      const def = DEFAULT_ROUTINES.find(d => d.id === r.id);
-      if (def && def.identity) r.identity = def.identity;
-    }
+    const def = DEFAULT_ROUTINES.find(d => d.id === r.id);
+    if (!r.identity && def && def.identity) r.identity = def.identity;
+    if (!r.emoji) r.emoji = (def && def.emoji) || suggestRoutineEmoji(r.name);
   });
 }
 
-// ── TODAY'S EVENT (date-seeded) ───────────────────
-function getTodayEvent() {
-  const t = today();
-  let h = 0;
-  for (let i=0;i<t.length;i++) h = (h*31+t.charCodeAt(i))&0xfffffff;
-  return EVENTS[Math.abs(h) % EVENTS.length];
+function suggestRoutineEmoji(name='') {
+  const n=(name||'').toLowerCase();
+  const rules=[
+    ['영양제','💊'],['약','💊'],['운동','💪'],['헬스','💪'],['걷','🚶'],['러닝','🏃'],['간식','🍪'],['음료','🥤'],['우유','🥛'],['밀가루','🍞'],
+    ['독서','📚'],['책','📚'],['글쓰기','✍️'],['일기','📓'],['목표','🎯'],['주가','📈'],['투자','📈'],['정리','🧹'],['청소','🧹'],
+    ['씻','🫧'],['샤워','🚿'],['괄사','💆'],['스마트워치','⌚'],['워치','⌚'],['명상','🧘'],['취침','🌙'],['수면','😴'],['잠','😴'],
+    ['물','💧'],['공부','🧠'],['영어','🔤'],['저축','💰'],['가계부','🧾'],['스트레칭','🤸']
+  ];
+  const hit=rules.find(([key])=>n.includes(key));
+  return hit?hit[1]:'⭐';
 }
-
-// ── TODAY'S MYSTERY ROUTINE (date-seeded) ─────────
-function getMysteryRoutineId() {
-  const t = today();
-  if (state.mysteryDate === t && state.mysteryRoutineId) return state.mysteryRoutineId;
-  const active = state.routines.filter(r=>r.active!==false);
-  if (!active.length) return null;
-  let h = 0;
-  for (let i=0;i<t.length;i++) h=(h*37+t.charCodeAt(i)+7)&0xfffffff;
-  const id = active[Math.abs(h) % active.length].id;
-  state.mysteryRoutineId = id;
-  state.mysteryDate = t;
-  save();
-  return id;
+function routineEmoji(r){ return r.emoji || suggestRoutineEmoji(r.name); }
+function dateKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function weekRangeFor(ds){
+  const d=dateFromStr(ds); const dow=d.getDay();
+  const mon=new Date(d); mon.setDate(d.getDate()-(dow===0?6:dow-1));
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  return {start:mon,end:sun};
 }
-
-// ── RANDOM REWARD ROLL ────────────────────────────
-function rollReward(event) {
-  let r = Math.random() * TOTAL_WEIGHT, cumul = 0;
-  let picked = REWARD_TABLE[0];
-  for (const row of REWARD_TABLE) {
-    cumul += row.weight;
-    if (r <= cumul) { picked = row; break; }
+function collectedRoutineEmojis(ds){
+  const log=state.logs[ds]||{};
+  return activeRoutinesForDate(ds).filter(r=>log[r.id]).map(r=>routineEmoji(r));
+}
+const WEEK_GROWTH_STAGES = [
+  {min:0, emoji:'🌰', name:'씨앗', next:1},
+  {min:1, emoji:'🌱', name:'새싹', next:3},
+  {min:3, emoji:'🌿', name:'어린잎', next:6},
+  {min:6, emoji:'🪴', name:'작은 화분', next:10},
+  {min:10, emoji:'🌵', name:'단단한 식물', next:15},
+  {min:15, emoji:'🌳', name:'나무', next:21},
+  {min:21, emoji:'🌸', name:'만개', next:null},
+];
+function getWeekGrowthStage(count){
+  let stage=WEEK_GROWTH_STAGES[0];
+  for(const s of WEEK_GROWTH_STAGES){ if(count>=s.min) stage=s; else break; }
+  return stage;
+}
+function renderEnergyBoard(ds){
+  const todayEl=document.getElementById('today-energy');
+  const growthEl=document.getElementById('week-growth');
+  if(!todayEl||!growthEl) return;
+  const todayEmojis=collectedRoutineEmojis(ds);
+  todayEl.innerHTML=todayEmojis.length?todayEmojis.map(e=>`<span>${e}</span>`).join(''):'<span class="energy-empty">아직 모은 에너지가 없어요</span>';
+  const range=weekRangeFor(ds); const all=[];
+  for(const d=new Date(range.start); d<=range.end; d.setDate(d.getDate()+1)){
+    const key=dateKey(d);
+    if(key>today()) break;
+    all.push(...collectedRoutineEmojis(key));
   }
-  // mystery day: occasionally reroll for bigger
-  if (event.id === 'mystery' && Math.random() < 0.3) {
-    const bigPool = REWARD_TABLE.filter(x=>x.pts>=5);
-    picked = bigPool[Math.floor(Math.random()*bigPool.length)];
-  }
-  let pts = picked.pts * event.mult;
-  return { pts, label: pts === picked.pts ? picked.label : `+${pts} ${event.mult>1?'×'+event.mult:''}`, type: picked.type };
+  const count=all.length;
+  const stage=getWeekGrowthStage(count);
+  const next=stage.next;
+  const pct=next?Math.min(100,Math.round((count-stage.min)/(next-stage.min)*100)):100;
+  const nextText=next?`다음 성장까지 ${next-count} 에너지`:'이번 주 식물이 활짝 피었어요';
+  growthEl.innerHTML=`<div class="growth-main">
+    <div class="growth-plant">${stage.emoji}</div>
+    <div style="min-width:0;flex:1">
+      <div class="growth-title">${stage.name} · ${count} 에너지</div>
+      <div class="growth-sub">이번 주 루틴 에너지로 자라는 중</div>
+    </div>
+  </div>
+  <div class="growth-bar"><div class="growth-fill" style="width:${pct}%"></div></div>
+  <div class="growth-next">${nextText}</div>`;
+}
+function fixedReward() {
+  return {pts:1, label:'+1', type:'normal'};
 }
 
 // ── SCREENS ───────────────────────────────────────
@@ -953,73 +1055,58 @@ function showScreen(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   if (btn) btn.classList.add('active');
-  if (name==='today')   { renderToday(); renderMoodBar(); }
-  if (name==='char')    renderChar();
-  if (name==='records') renderRecords();
-  if (name==='manage')  renderManage();
+  if (name==='today')     { renderToday(); renderMoodBar(); }
+  if (name==='challenge') renderChallenge();
+  if (name==='char')      renderChar();
+  if (name==='records')   renderRecords();
+  if (name==='manage')    renderManage();
 }
 
 // ── TODAY ─────────────────────────────────────────
 function renderMoodBar() {
   const el = document.getElementById('mood-bar');
   if (!el) return;
-  const cur = state.moods[today()];
+  const cur = state.moods[getTodayViewDate()];
   el.innerHTML = `<span class="mood-label">오늘 기분</span><div class="mood-btns">${
     MOODS.map(m => `<button class="mood-btn${cur===m.id?' selected':''}" onclick="saveMood('${m.id}')" title="${m.label}">${m.emoji}</button>`).join('')
   }</div>`;
 }
 function saveMood(id) {
   if (!state.moods) state.moods = {};
-  state.moods[today()] = state.moods[today()] === id ? null : id;
+  const ds=getTodayViewDate();
+  state.moods[ds] = state.moods[ds] === id ? null : id;
   save();
   renderMoodBar();
   renderCalendar();
 }
 
 function renderToday() {
-  const t = today();
-  const d = new Date();
+  const t = getTodayViewDate();
+  const d = dateFromStr(t);
   const days=['일','월','화','수','목','금','토'];
   document.getElementById('today-date').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
-  const h=d.getHours();
-  document.getElementById('today-greeting').textContent=
+  const isRealToday=t===today();
+  document.getElementById('today-next-btn').disabled=isRealToday;
+  document.getElementById('today-jump-btn').style.display=isRealToday?'none':'';
+  const h=new Date().getHours();
+  document.getElementById('today-greeting').textContent=!isRealToday?'이 날의 루틴과 챌린지 기록이에요':
     h<12?'좋은 아침이에요! 오늘 뭐가 나올지 모르지 않아요? 🎲':
     h<18?'잘 하고 있어요! 계속 달려봐요 🔥':
          '오늘 하루 수고했어요 🌙 마무리 잘 해봐요';
 
   if (!state.logs[t]) state.logs[t]={};
   const log=state.logs[t];
-  const activeR=state.routines.filter(r=>r.active!==false);
-  const done=activeR.filter(r=>log[r.id]).length;
-  const total=activeR.length;
+  const activeR=state.routines.filter(r=>isRoutineTrackedOnDate(r,t));
+  const dayProgress=getDayProgress(t);
+  const done=dayProgress.done;
+  const total=dayProgress.total;
   const pct=total?Math.round(done/total*100):0;
 
   document.getElementById('ring-pct').textContent=pct+'%';
   document.getElementById('today-done-count').textContent=`${done} / ${total} 완료`;
   document.getElementById('ring-fg').style.strokeDashoffset=201-(201*pct/100);
-
-  const s=state.character.stats;
-  const title=getCurrentTitle(s.health,s.growth,s.life);
-  document.getElementById('char-display-name').textContent=state.character.name;
-  document.getElementById('today-char-title').textContent=title.emoji+' '+title.name;
-
-  // Event banner
-  const ev=getTodayEvent();
-  const banner=document.getElementById('event-banner-wrap');
-  if (ev.label) {
-    banner.innerHTML=`<div class="event-banner" style="background:${ev.color};border-color:${ev.borderColor};margin-bottom:16px">
-      <div class="event-icon">🎲</div>
-      <div class="event-text">
-        <h4 style="color:${ev.borderColor}">${ev.label}</h4>
-        <p style="color:var(--text-dim)">${ev.desc}</p>
-      </div>
-    </div>`;
-  } else {
-    banner.innerHTML='';
-  }
-
-  // Mystery routine
-  const mysteryId=getMysteryRoutineId();
+  renderTodayCategoryRates(t);
+  renderEnergyBoard(t);
 
   // Groups
   const groups={morning:[],night:[],none:[]};
@@ -1034,28 +1121,8 @@ function renderToday() {
   groups.none.forEach(r=>{ if(cats[r.category]) cats[r.category].push(r); else { cats[r.category]=[r]; } });
 
   let html='';
-  const activeChal=state.challenges.filter(c=>isChallengeActive(c));
-  if (activeChal.length) {
-    html+=`<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--gold)">⚡ 진행 중 챌린지</div>`;
-    activeChal.forEach(c=>{
-      const cl=state.challengeLogs[c.id]||{};
-      const dc=Object.values(cl).filter(Boolean).length;
-      const td=cl[t];
-      const isCount=c.type==='count';
-      const p2=isCount?Math.min(100,Math.round(dc/c.targetCount*100)):Math.round(dc/c.duration*100);
-      const el=isCount?null:getDaysElapsed(c.startDate);
-      const infoLeft=isCount?`${dc}/${c.targetCount}회`:`${dc}/${c.duration}일`;
-      const infoRight=isCount?(dc>=c.targetCount?'🎉 달성!':''):`${c.duration-el}일 남음`;
-      html+=`<div class="challenge-card" data-cid="${c.id}" data-cname="${c.name.replace(/"/g,'&quot;')}">
-        <div class="challenge-card-header"><h4>⚡ ${c.name}</h4>
-          <button class="challenge-done-btn" onclick="toggleChallenge('${c.id}')">${td?'✓ 완료':'오늘 완료'}</button>
-        </div>
-        <div class="challenge-bar"><div class="challenge-bar-fill" style="width:${p2}%"></div></div>
-        <div class="challenge-info"><span>${infoLeft}</span><span>${infoRight}</span></div>
-      </div>`;
-    });
-    html+='</div>';
-  }
+  const activeChal=state.challenges.filter(c=>isChallengeTrackedOnDate(c,t)&&isChallengeActive(c));
+  const challengeHTML=activeChal.length?renderTodayChallengeBlock(activeChal,t):'';
 
   getCats().map(c=>c.id).forEach(cat=>{
     if (!cats[cat].length) return;
@@ -1065,11 +1132,12 @@ function renderToday() {
       <h3>${catIcon(cat)} ${catLabel(cat)}</h3>
       <span class="cat-count">${cd}/${cats[cat].length}</span>
     </div>`;
-    cats[cat].forEach(r=>{html+=routineCardHTML(r,log[r.id],r.id===mysteryId);});
+    cats[cat].forEach(r=>{html+=routineCardHTML(r,log[r.id],t);});
     html+='</div>';
   });
-  if (groups.morning.length) html+=bundleHTML('🌅','모닝 루틴','morning',groups.morning,log,mysteryId);
-  if (groups.night.length)   html+=bundleHTML('🌙','나이트 루틴','night',groups.night,log,mysteryId);
+  if (groups.morning.length) html+=bundleHTML('🌅','모닝 루틴','morning',groups.morning,log,t);
+  if (groups.night.length)   html+=bundleHTML('🌙','나이트 루틴','night',groups.night,log,t);
+  html+=challengeHTML;
 
   document.getElementById('routine-list').innerHTML=html;
   Object.entries(bundleStates).forEach(([g,c])=>{
@@ -1085,30 +1153,92 @@ function renderToday() {
   });
 }
 
-function routineCardHTML(r, done, isMystery) {
+function getTodayCategoryRates(ds) {
+  const rates={};
+  getCats().forEach(c=>{rates[c.id]={cat:c,done:0,total:0};});
+  const rLog=state.logs[ds]||{};
+  activeRoutinesForDate(ds).forEach(r=>{
+    const cat=r.category||getCats()[0]?.id||'health';
+    if(!rates[cat]) rates[cat]={cat:getCat(cat),done:0,total:0};
+    rates[cat].total++;
+    if(rLog[r.id]) rates[cat].done++;
+  });
+  activeChallengesForDate(ds).forEach(c=>{
+    const cat=getChallengeCategory(c);
+    if(!rates[cat]) rates[cat]={cat:getCat(cat),done:0,total:0};
+    rates[cat].total++;
+    if(challengeDoneOnDate(c,ds)) rates[cat].done++;
+  });
+  return Object.values(rates).filter(x=>x.total>0);
+}
+function renderTodayCategoryRates(ds) {
+  const el=document.getElementById('today-cat-rates');
+  if(!el) return;
+  const rows=getTodayCategoryRates(ds);
+  el.innerHTML=rows.length?rows.map(x=>{
+    const pct=Math.round(x.done/x.total*100);
+    const color=x.cat.color||catColor(x.cat.id);
+    return `<div class="today-cat-rate">
+      <span class="today-cat-name">${x.cat.icon||'•'} ${x.cat.name||x.cat.id}</span>
+      <span class="today-cat-bar"><span class="today-cat-fill" style="width:${pct}%;background:${color}"></span></span>
+      <span class="today-cat-pct">${pct}%</span>
+    </div>`;
+  }).join(''):'<div style="font-size:12px;color:var(--text-dim)">오늘 표시할 항목이 없어요</div>';
+}
+
+function renderTodayChallengeBlock(challenges, t) {
+  let html=`<div style="margin-top:14px;margin-bottom:16px"><div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--gold)">⚡ 진행 중 챌린지</div>`;
+  challenges.forEach(c=>{
+    const cl=state.challengeLogs[c.id]||{};
+    const dc=Object.values(cl).filter(Boolean).length;
+    const td=cl[t];
+    const isCount=c.type==='count';
+    const isMixed=c.type==='mixed';
+    const p2=isCount||isMixed?Math.min(100,Math.round(dc/(c.targetCount||1)*100)):Math.round(dc/(c.duration||1)*100);
+    const el=(isCount)?null:getDaysElapsed(c.startDate);
+    const infoLeft=isCount?`${dc}/${c.targetCount}회`:isMixed?`${dc}/${c.targetCount}회`:`${dc}/${c.duration}일`;
+    const infoRight=isCount?(dc>=(c.targetCount||1)?'달성':''):isMixed?(dc>=(c.targetCount||1)?'목표 달성':`${Math.max(0,c.duration-getDaysElapsed(c.startDate))}일 남음`):`${Math.max(0,c.duration-el)}일 남음`;
+    const memo=(state.challengeMemos[c.id]||{})[t]||'';
+    const failReason=getFailReason('challenge',c.id,t);
+    const fr=failReason?FAIL_REASONS.find(x=>x.id===failReason):null;
+    html+=`<div class="challenge-card ${td?'done':''}" data-cid="${c.id}" data-cname="${c.name.replace(/"/g,'&quot;')}" style="border-color:${catColor(getChallengeCategory(c))}66">
+      <div class="challenge-card-header">
+        <div class="check-circle" onclick="toggleChallenge('${c.id}','${t}')" title="챌린지 완료">${td?'✓':fr?'✕':''}</div>
+        <h4>${catIcon(getChallengeCategory(c))} ${c.name}</h4>
+        ${!td?`<button class="fail-btn" onclick="openFailModal('${c.id}',event,'${t}','challenge')" title="못 한 이유 기록">📝</button>`:''}
+      </div>
+      <div class="challenge-bar"><div class="challenge-bar-fill" style="width:${p2}%;background:${td?'rgba(255,255,255,0.28)':catColor(getChallengeCategory(c))}"></div></div>
+      <div class="challenge-info"><span>${infoLeft}</span><span>${infoRight}</span></div>
+      ${memo?`<div style="margin-top:6px;font-size:11px;color:var(--text-dim);padding:5px 8px;background:rgba(255,255,255,0.04);border-radius:7px;border-left:2px solid var(--gold)">📝 ${memo}</div>`:''}
+      ${fr?`<div class="fail-tag" style="margin-top:6px">${fr.emoji} ${fr.label}</div>`:''}
+    </div>`;
+  });
+  return html+'</div>';
+}
+
+function routineCardHTML(r, done, ds=getTodayViewDate()) {
+  const t=ds;
   const freqLabel=getFreqLabel(r.freq);
   const weekTarget=getWeekTarget(r.freq);
-  const weekCount=weekTarget?getWeekCountById(r.id):null;
+  const weekCount=weekTarget?getWeekCountById(r.id,t):null;
   const subText=weekTarget?`이번 주 ${weekCount}/${weekTarget}회`:'';
-  const t=today();
   const failReason=(state.failLogs[t]||{})[r.id];
   const fr=failReason?FAIL_REASONS.find(x=>x.id===failReason):null;
-  return `<div class="routine-card ${done?'done':fr?'failed':''} ${isMystery&&!done?'mystery':''}" data-rid="${r.id}" data-rname="${r.name.replace(/"/g,'&quot;')}" onclick="toggleRoutine('${r.id}',event)">
-    ${isMystery&&!done?'<div class="mystery-badge">🎲 보너스?</div>':''}
+  return `<div class="routine-card ${done?'done':fr?'failed':''}" data-rid="${r.id}" data-rname="${r.name.replace(/"/g,'&quot;')}" onclick="toggleRoutine('${r.id}',event,'${t}')">
     <div class="check-circle">${done?'✓':fr?'✕':''}</div>
     <div class="routine-info">
-      <div class="routine-name">${r.name}</div>
+      <div class="routine-name"><span class="routine-emoji">${routineEmoji(r)}</span>${r.name}</div>
       ${subText?`<div class="routine-sub">${subText}</div>`:''}
       ${fr?`<div class="fail-tag">${fr.emoji} ${fr.label}</div>`:''}
     </div>
     <div style="display:flex;align-items:center;gap:6px">
       ${freqLabel?`<span class="routine-badge" style="background:${catColor(r.category)}22;color:${catColor(r.category)}">${freqLabel}</span>`:''}
-      ${!done?`<button class="fail-btn" onclick="openFailModal('${r.id}',event)" title="못 한 이유 기록">📝</button>`:''}
+      ${!done?`<button class="fail-btn" onclick="openFailModal('${r.id}',event,'${t}')" title="못 한 이유 기록">📝</button>`:''}
     </div>
   </div>`;
 }
 
-function bundleHTML(icon,title,group,routines,log,mysteryId) {
+function bundleHTML(icon,title,group,routines,log,ds=getTodayViewDate()) {
   const done=routines.filter(r=>log[r.id]).length;
   return `<div class="bundle-wrap">
     <div class="bundle-header" onclick="toggleBundle('${group}')">
@@ -1116,7 +1246,7 @@ function bundleHTML(icon,title,group,routines,log,mysteryId) {
       <span class="bundle-prog">${done}/${routines.length}</span>
     </div>
     <div class="bundle-body" id="bundle-body-${group}">
-      ${routines.map(r=>routineCardHTML(r,log[r.id],r.id===mysteryId)).join('')}
+      ${routines.map(r=>routineCardHTML(r,log[r.id],ds)).join('')}
     </div>
   </div>`;
 }
@@ -1128,16 +1258,52 @@ function toggleBundle(group) {
 }
 
 function getFreqLabel(freq){
-  const map={daily:'매일',weekly6:'주 6회',weekly5:'주 5회',weekly4:'주 4회',weekly3:'주 3회',weekly2:'주 2회',weekly:'주 1회',monthly:'월 1회'};
+  const map={daily:'매일',weekday:'평일',weekend:'주말',weekly6:'주 6회',weekly5:'주 5회',weekly4:'주 4회',weekly3:'주 3회',weekly2:'주 2회',weekly:'주 1회',monthly:'월 1회'};
   return map[freq]||freq||'매일';
+}
+function getChallengeCategory(c){ return c.category || getCats()[0]?.id || 'health'; }
+function isChallengeTrackedOnDate(c, ds){
+  if(!c || c.active===false) return false;
+  if(c.startDate && ds < c.startDate) return false;
+  if(c.type==='period' || c.type==='mixed'){
+    const e=new Date((c.startDate||today())+'T00:00:00');
+    e.setDate(e.getDate()+(c.duration||0));
+    const end=`${e.getFullYear()}-${String(e.getMonth()+1).padStart(2,'0')}-${String(e.getDate()).padStart(2,'0')}`;
+    if(ds>=end) return false;
+  }
+  return true;
+}
+function activeChallengesForDate(ds){ return state.challenges.filter(c=>isChallengeTrackedOnDate(c, ds)); }
+function isChallengeStarted(c, ds=today()){
+  return !c.startDate || c.startDate<=ds;
+}
+function isRoutineTrackedOnDate(r, ds){
+  if(!r || r.active===false) return false;
+  const freq=r.freq||'daily';
+  const day=new Date((ds||today())+'T00:00:00').getDay();
+  if(freq==='weekday') return day>=1&&day<=5;
+  if(freq==='weekend') return day===0||day===6;
+  return true;
+}
+function activeRoutinesForDate(ds){ return state.routines.filter(r=>isRoutineTrackedOnDate(r, ds)); }
+function challengeDoneOnDate(c, ds){ return !!(state.challengeLogs[c.id]&&state.challengeLogs[c.id][ds]); }
+function getDayProgress(ds){
+  const routines=activeRoutinesForDate(ds);
+  const rLog=state.logs[ds]||{};
+  const challenges=activeChallengesForDate(ds);
+  const rDone=routines.filter(r=>rLog[r.id]).length;
+  const cDone=challenges.filter(c=>challengeDoneOnDate(c, ds)).length;
+  return {done:rDone+cDone,total:routines.length+challenges.length,routineDone:rDone,challengeDone:cDone};
 }
 function getWeekTarget(freq){
   if(!freq||freq==='daily'||freq==='monthly') return null;
+  if(freq==='weekday') return 5;
+  if(freq==='weekend') return 2;
   const m=freq.match(/^weekly(\d+)$/);
   return m?parseInt(m[1]):null;
 }
-function getWeekCountById(routineId) {
-  const d=new Date(),dow=d.getDay(),mon=new Date(d);
+function getWeekCountById(routineId, baseDate=today()) {
+  const d=dateFromStr(baseDate),dow=d.getDay(),mon=new Date(d);
   mon.setDate(d.getDate()-(dow===0?6:dow-1));
   let c=0;
   for(let i=0;i<7;i++){
@@ -1149,8 +1315,8 @@ function getWeekCountById(routineId) {
 }
 
 // ── TOGGLE ROUTINE (핵심: 랜덤 보상) ─────────────
-function toggleRoutine(id, ev) {
-  const t=today();
+function toggleRoutine(id, ev, ds=getTodayViewDate()) {
+  const t=ds;
   if(!state.logs[t]) state.logs[t]={};
   const wasDone=state.logs[t][id];
   // 실패 이유가 기록된 루틴은 체크 불가
@@ -1164,42 +1330,17 @@ function toggleRoutine(id, ev) {
   if(!r) { save(); renderToday(); return; }
 
   if (!wasDone) {
-    // 체크 ON → 랜덤 보상
-    const event=getTodayEvent();
-    const isMystery=id===getMysteryRoutineId();
-    let reward=rollReward(event);
-
-    // 황금 루틴이면 추가 배율
-    if (isMystery) {
-      reward.pts = reward.pts * 2;
-      reward.label = `+${reward.pts} 🎲 보너스!`;
-      reward.type = reward.pts >= 20 ? 'jackpot' : 'great';
-    }
-
+    const reward=fixedReward();
     const prev=state.character.stats[r.category]||0;
     recalcStats();
-    checkRankUp(r.category, prev, state.character.stats[r.category]);
+    if(t===today()){
+      checkRankUp(r.category, prev, state.character.stats[r.category]);
+      spawnFloatingReward(null, reward.label, reward.type);
+      if (r.identity) setTimeout(()=>showIdentity(r.identity), 400);
+      handleCombo();
+      setTimeout(()=>checkMilestone(), 100);
+    }
     checkTitleUnlock();
-
-    // 잭팟?
-    if (reward.type==='jackpot') {
-      spawnParticles(ev);
-      setTimeout(()=>showJackpot(reward, r.category), 200);
-    } else {
-      // floating reward text
-      spawnFloatingReward(ev, reward.label, reward.type);
-      if (reward.type==='great') spawnParticles(ev, 8);
-    }
-
-    // 정체성 문장
-    if (r.identity) {
-      setTimeout(()=>showIdentity(r.identity), reward.type==='jackpot' ? 2200 : 400);
-    }
-
-    // 콤보
-    handleCombo();
-    // 마일스톤 체크
-    setTimeout(()=>checkMilestone(), 100);
 
   } else {
     recalcStats();
@@ -1247,7 +1388,7 @@ function showCombo(n) {
 
 // ── FLOATING REWARD NUMBER ────────────────────────
 function spawnFloatingReward(ev, label, type) {
-  const colors={normal:'#e8e8f0',lucky:'#ffd700',great:'#ff9500',jackpot:'#ff4466'};
+  const colors={normal:'#e8e8f0',lucky:'#ffd700',great:'#ff9500'};
   const el=document.createElement('div');
   el.className='float-reward';
   el.textContent=label;
@@ -1283,39 +1424,18 @@ function spawnParticles(ev, count=15) {
   }
 }
 
-// ── JACKPOT ───────────────────────────────────────
-const SLOT_EMOJIS=['🍒','🍋','🍇','🔔','⭐','💎','🎰','🌈','🎊'];
-function showJackpot(reward, cat) {
-  const pick=()=>SLOT_EMOJIS[Math.floor(Math.random()*SLOT_EMOJIS.length)];
-  const el=document.getElementById('jackpot-slots');
-  let ticks=0;
-  const iv=setInterval(()=>{
-    el.textContent=pick()+pick()+pick();
-    ticks++;
-    if(ticks>12){
-      clearInterval(iv);
-      el.textContent='💎💎💎';
-    }
-  },80);
-  document.getElementById('jackpot-reward').textContent=`${catLabel(cat)} +${reward.pts} 획득!`;
-  document.getElementById('jackpot-overlay').classList.add('open');
-  spawnParticles(null,30);
-}
-function closeJackpot(){document.getElementById('jackpot-overlay').classList.remove('open');}
 
 // ── MILESTONE ─────────────────────────────────────
 function checkMilestone() {
   const t=today();
-  const activeR=state.routines.filter(r=>r.active!==false);
-  if(!activeR.length) return;
-  const log=state.logs[t]||{};
-  const done=activeR.filter(r=>log[r.id]).length;
-  const pct=done/activeR.length;
+  const progress=getDayProgress(t);
+  if(!progress.total) return;
+  const pct=progress.done/progress.total;
 
   const milestones=[
-    {key:'50',pct:0.5, emoji:'⚡',title:'절반 달성!',    sub:'오늘의 루틴 절반을 완료했어요'},
+    {key:'50',pct:0.5, emoji:'⚡',title:'절반 달성!',    sub:'오늘 할 일의 절반을 완료했어요'},
     {key:'80',pct:0.8, emoji:'🔥',title:'거의 다 왔어!', sub:'80% 돌파! 조금만 더!'},
-    {key:'100',pct:1.0,emoji:'👑',title:'완벽한 하루!',  sub:'오늘 모든 루틴을 완료했어요 🎉'},
+    {key:'100',pct:1.0,emoji:'👑',title:'완벽한 하루!',  sub:'오늘 루틴과 챌린지를 모두 완료했어요 🎉'},
   ];
 
   for(const m of milestones){
@@ -1337,16 +1457,70 @@ function checkMilestone() {
 function closeMilestone(){document.getElementById('milestone-overlay').classList.remove('open');}
 
 // ── CHALLENGE ─────────────────────────────────────
-function toggleChallenge(id){
-  const t=today();
+function completeChallenge(id, ds, value=true, memo='') {
+  const c=state.challenges.find(x=>x.id===id);
+  if(!c)return;
   if(!state.challengeLogs[id]) state.challengeLogs[id]={};
-  const w=state.challengeLogs[id][t];
-  state.challengeLogs[id][t]=!w;
-  if(!w){
-    const ev=getTodayEvent();
-    spawnFloatingReward(ev,'⚡ 챌린지!','lucky');
+  const prev=state.character.stats[getChallengeCategory(c)]||0;
+  state.challengeLogs[id][ds]=value;
+  clearFailEntry('challenge',id,ds);
+  if(memo){
+    if(!state.challengeMemos[id]) state.challengeMemos[id]={};
+    state.challengeMemos[id][ds]=memo;
+  } else if(state.challengeMemos[id]) {
+    delete state.challengeMemos[id][ds];
   }
-  save(); renderToday();
+  recalcStats();
+  maybeAwardChallengeXP(c);
+  if(ds===today()) checkRankUp(getChallengeCategory(c), prev, state.character.stats[getChallengeCategory(c)]||0);
+  checkTitleUnlock();
+  if(ds===today()){spawnFloatingReward(null,'⚡ 챌린지!','lucky');}
+  save(); renderToday(); renderChallenge(); renderChar(); renderCalendar(); renderMonthReport(); renderBreakdown();
+}
+function openChallengeMemoModal(id, ds=today(), allowSkip=false, value=true) {
+  document.getElementById('memo-challenge-id').value=id;
+  document.getElementById('memo-challenge-id').dataset.ds=ds;
+  document.getElementById('memo-challenge-id').dataset.value=value;
+  document.getElementById('challenge-memo-input').value='';
+  document.getElementById('challenge-memo-skip-btn').style.display=allowSkip?'':'none';
+  openModal('challenge-memo-modal');
+  setTimeout(()=>document.getElementById('challenge-memo-input').focus(),300);
+}
+function toggleChallenge(id, ds=getTodayViewDate()){
+  const t=ds;
+  const c=state.challenges.find(x=>x.id===id);
+  if(c&&c.startDate&&t<c.startDate){showToast('아직 시작일이 아니에요');return;}
+  if(getFailReason('challenge',id,t)){showToast('📝 못한 이유를 먼저 지워주세요');return;}
+  if(!state.challengeLogs[id]) state.challengeLogs[id]={};
+  const done=state.challengeLogs[id][t];
+  if(done){
+    state.challengeLogs[id][t]=false;
+    if(state.challengeMemos[id]) delete state.challengeMemos[id][t];
+    recalcStats(); checkTitleUnlock(); save(); renderToday(); renderChallenge(); renderChar(); renderCalendar(); renderMonthReport(); renderBreakdown();
+  } else if(c&&c.achieveMode==='levels'){
+    document.getElementById('level-challenge-id').value=id;
+    document.getElementById('level-challenge-ds').value=t;
+    openModal('challenge-level-modal');
+  } else if(c&&c.memoEnabled===false){
+    completeChallenge(id,t,true,'');
+  } else {
+    openChallengeMemoModal(id,t,false);
+  }
+}
+function saveChallengeMemo(skip=false){
+  const el=document.getElementById('memo-challenge-id');
+  const id=el.value;
+  const ds=el.dataset.ds||today();
+  const c=state.challenges.find(x=>x.id===id);
+  const memo=document.getElementById('challenge-memo-input').value.trim();
+  if(!skip && c && c.memoEnabled!==false && !memo){showToast('한줄 기록을 입력해주세요');return;}
+  const current=state.challengeLogs[id]?.[ds];
+  const pending=el.dataset.value;
+  const value=current||(pending&&pending!=='true'?pending:true);
+  completeChallenge(id, ds, value, memo);
+  closeModal('challenge-memo-modal');
+  el.dataset.ds='';
+  el.dataset.value='';
 }
 
 // ── STAT / RANK / TITLE ───────────────────────────
@@ -1371,6 +1545,13 @@ function recalcStats() {
     if (r.active === false) return;
     Object.values(state.logs).forEach(log => {
       if (log[r.id]) stats[r.category] = (stats[r.category] || 0) + 1;
+    });
+  });
+  state.challenges.forEach(c => {
+    if (c.active === false) return;
+    const cat=getChallengeCategory(c);
+    Object.entries(state.challengeLogs[c.id]||{}).forEach(([ds, done]) => {
+      if (done && isChallengeTrackedOnDate(c, ds)) stats[cat] = (stats[cat] || 0) + 1;
     });
   });
   state.character.stats = stats;
@@ -1410,7 +1591,7 @@ function renderMonthReport(){
   ar.forEach(r=>{routineCounts[r.id]=0;});
   // 연속/회복 패턴 분석
   const monthEntries=Object.entries(state.logs)
-    .filter(([d])=>d.startsWith(mk))
+    .filter(([d,log])=>d.startsWith(mk)&&ar.some(r=>log[r.id]))
     .sort(([a],[b])=>a.localeCompare(b));
 
   monthEntries.forEach(([,log])=>{
@@ -1591,6 +1772,20 @@ function calcWeekRate(routineId, weekStart, weekEnd) {
   return total > 0 ? { rate: Math.round(done / total * 100), done, total } : { rate: 0, done: 0, total: 0 };
 }
 
+function getRoutineStreak(routineId) {
+  let streak = 0;
+  const now = new Date();
+  for (let i = 0; ; i++) {
+    const d = new Date(now); d.setDate(now.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    if (ds > today()) continue;
+    if (state.logs[ds]?.[routineId]) streak++;
+    else if (i === 0) continue; // 오늘 아직 안 했으면 어제부터
+    else break;
+  }
+  return streak;
+}
+
 function topCatSummary(active, getRateFn) {
   const catDone = {};
   active.forEach(r => {
@@ -1637,12 +1832,26 @@ function renderWeeklyCompare() {
       <div class="wcmp-chip-list">${chips(items, bg, color)}</div>
     </div>` : '';
 
+  const streaks = active
+    .map(r => ({ name: r.name, streak: getRoutineStreak(r.id) }))
+    .filter(x => x.streak >= 3)
+    .sort((a, b) => b.streak - a.streak)
+    .slice(0, 5);
+  const streakSection = streaks.length ? `
+    <div class="wcmp-group">
+      <div class="wcmp-group-label">🔥 연속 달성 중</div>
+      <div class="wcmp-chip-list">${streaks.map(x =>
+        `<div class="wcmp-chip" style="background:rgba(255,107,53,0.12);color:#ff6b35">${x.name} <span style="opacity:0.8;font-size:11px">${x.streak}일째</span></div>`
+      ).join('')}</div>
+    </div>` : '';
+
   return `<div class="weekly-cmp-card">
     <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">이번 주 vs 지난 주</div>
     ${focusSummary}
+    ${streakSection}
     ${group('잘한 루틴 👍', improved, 'rgba(67,233,123,0.15)', '#43e97b')}
     ${group('아쉬운 루틴 😬', declined, 'rgba(230,57,70,0.12)', '#e63946')}
-    ${!improved.length && !declined.length ? `<div style="font-size:13px;color:var(--text-dim)">루틴 변화가 없어요</div>` : ''}
+    ${!improved.length && !declined.length && !streaks.length ? `<div style="font-size:13px;color:var(--text-dim)">루틴 변화가 없어요</div>` : ''}
   </div>`;
 }
 
@@ -1696,22 +1905,36 @@ function renderMonthlyCompare() {
       <div class="wcmp-chip-list">${chips(items, bg, color)}</div>
     </div>` : '';
 
+  const streaks = active
+    .map(r => ({ name: r.name, streak: getRoutineStreak(r.id) }))
+    .filter(x => x.streak >= 7)
+    .sort((a, b) => b.streak - a.streak)
+    .slice(0, 5);
+  const streakSection = streaks.length ? `
+    <div class="wcmp-group">
+      <div class="wcmp-group-label">🔥 연속 달성 중</div>
+      <div class="wcmp-chip-list">${streaks.map(x =>
+        `<div class="wcmp-chip" style="background:rgba(255,107,53,0.12);color:#ff6b35">${x.name} <span style="opacity:0.8;font-size:11px">${x.streak}일째</span></div>`
+      ).join('')}</div>
+    </div>` : '';
+
   return `<div class="weekly-cmp-card" style="margin-top:12px">
     <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">이번 달 vs 지난 달</div>
     ${focusSummary}
+    ${streakSection}
     ${group('잘한 루틴 👍', improved, 'rgba(67,233,123,0.15)', '#43e97b')}
     ${group('아쉬운 루틴 😬', declined, 'rgba(230,57,70,0.12)', '#e63946')}
-    ${!improved.length && !declined.length ? `<div style="font-size:13px;color:var(--text-dim)">루틴 변화가 없어요</div>` : ''}
+    ${!improved.length && !declined.length && !streaks.length ? `<div style="font-size:13px;color:var(--text-dim)">루틴 변화가 없어요</div>` : ''}
   </div>`;
 }
 
 function renderChar(){
+  if(!document.getElementById('char-main-title')) return;
   const {health,growth,life}=state.character.stats;
   const title=getCurrentTitle(health,growth,life);
   document.getElementById('char-main-title').textContent=title.name;
   document.getElementById('char-sub-desc').textContent=title.desc;
 
-  document.getElementById('habit-card').innerHTML = renderWeeklyCompare() + renderMonthlyCompare();
 
   // 카테고리별 능력 점수
   const cats=getCats();
@@ -1834,14 +2057,15 @@ function renderCalendar(){
   for(let day=1;day<=dim;day++){
     const k=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const iF=k>t,log=state.logs[k]||{};
+    const progress=getDayProgress(k);
     let cls='cal-day';
     let stamp='';
     const mood=state.moods&&state.moods[k];
     const moodEmoji=mood?(MOODS.find(m=>m.id===mood)||{}).emoji||'':'';
     if(iF){cls+=' future';}
-    else if(ar.length){
-      const done=ar.filter(r=>log[r.id]).length;
-      const pct=done/ar.length;
+    else if(progress.total){
+      const done=progress.done;
+      const pct=done/progress.total;
       const inner=moodEmoji?`<span class="stamp-mood">${moodEmoji}</span>`:'<span class="stamp-check">✓</span>';
       const sealHtml=`<div class="cal-stamp"><div class="stamp-seal">${inner}</div></div>`;
       const starHtml=`<div class="cal-stamp"><svg class="stamp-star" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><polygon points="25,3 31,18 47,18 34,28 39,44 25,34 11,44 16,28 3,18 19,18" fill="none" stroke="#4ecdc4" stroke-width="2.5" stroke-linejoin="round"/>${moodEmoji?`<text x="25" y="33" text-anchor="middle" font-size="14" class="stamp-star-mood">${moodEmoji}</text>`:''}</svg></div>`;
@@ -1877,6 +2101,12 @@ function renderBreakdown(){
       c[r.category].t++;
       if(log[r.id])c[r.category].d++;
     });
+    state.challenges.filter(ch=>isChallengeTrackedOnDate(ch,date)).forEach(ch=>{
+      const cat=getChallengeCategory(ch);
+      if(!c[cat])c[cat]={d:0,t:0};
+      c[cat].t++;
+      if(challengeDoneOnDate(ch,date))c[cat].d++;
+    });
   });
   const rows=cats.filter(cat=>c[cat.id]&&c[cat.id].t>0).map(cat=>{
     const v=c[cat.id];
@@ -1887,9 +2117,264 @@ function renderBreakdown(){
     </div>`;
   }).join('');
   document.getElementById('breakdown-list').innerHTML=rows||`<div style="text-align:center;color:var(--text-dim);font-size:13px;padding:12px 0">이 달 기록이 없어요</div>`;
+  document.getElementById('compare-cards').innerHTML=renderWeeklyCompare()+renderMonthlyCompare();
 }
 
 // ── MANAGE ────────────────────────────────────────
+// 챌린지 탭: 챌린지별 달력 스탬프
+let _chalCalOffset = {}; // 챌린지별 월 오프셋
+
+function renderChallenge(){
+  const challenges = state.challenges.filter(c=>c.active!==false&&isChallengeStarted(c));
+  let html='';
+  if(!challenges.length){
+    document.getElementById('challenge-tab-body').innerHTML='<div class="empty-state">챌린지가 없어요<br>아래 버튼으로 추가해보세요 ⚡</div>';
+    return;
+  }
+  challenges.forEach(c=>{
+    if(!_chalCalOffset[c.id]) _chalCalOffset[c.id]=0;
+    html+=_chalStampCard(c);
+  });
+  document.getElementById('challenge-tab-body').innerHTML=html;
+}
+
+function _chalStreak(cl){
+  // 오늘부터 거꾸로 연속 스탬프 카운트
+  let streak=0;
+  const now=new Date();
+  for(let i=0;;i++){
+    const d=new Date(now);d.setDate(now.getDate()-i);
+    const ds=d.toISOString().slice(0,10);
+    if(!!cl[ds]){streak++;}
+    else if(i===0){continue;} // 오늘 아직 안 찍었으면 어제부터
+    else{break;}
+  }
+  return streak;
+}
+
+const CHALLENGE_LEVELS = [
+  {level:1, name:'입문', xp:0},
+  {level:2, name:'적응', xp:5},
+  {level:3, name:'습관화', xp:12},
+  {level:4, name:'숙련', xp:25},
+  {level:5, name:'마스터', xp:50},
+];
+const CHALLENGE_TIER = {
+  success:{label:'성공', mult:1, color:'var(--gold)'},
+  great:{label:'우수', mult:1.5, color:'#43e97b'},
+  perfect:{label:'완벽', mult:2, color:'#ffd700'},
+};
+function getChallengeAward(id){
+  if(!state.challengeAwards) state.challengeAwards={};
+  if(!state.challengeAwards[id]) state.challengeAwards[id]={xp:0, tier:null};
+  return state.challengeAwards[id];
+}
+function getChallengeXP(c){ return getChallengeAward(c.id).xp||0; }
+function getChallengeLevelByXP(xp){ let cur=CHALLENGE_LEVELS[0]; for(const lv of CHALLENGE_LEVELS){ if(xp>=lv.xp) cur=lv; else break; } return cur; }
+function getNextChallengeLevel(xp){ return CHALLENGE_LEVELS.find(lv=>lv.xp>xp)||null; }
+function challengeDoneCount(c){ return Object.values(state.challengeLogs[c.id]||{}).filter(Boolean).length; }
+function challengeGoalTotal(c){ return c.type==='count' ? (c.targetCount||1) : c.type==='mixed' ? (c.targetCount||1) : (c.duration||1); }
+function challengeSuccessInfo(c){ const done=challengeDoneCount(c); const total=challengeGoalTotal(c); const ratio=total?done/total:0; let tier=null; if(ratio>=1) tier='perfect'; else if(ratio>=0.9) tier='great'; else if(ratio>=0.7) tier='success'; return {done,total,ratio,tier}; }
+function challengeBaseXP(c){ if(c.type==='count'){ const n=c.targetCount||0; if(n<=5) return 2; if(n<=10) return 4; if(n<=20) return 8; return 12; } const d=c.duration||1; if(d<=1) return 1; if(d<=3) return 2; if(d<=7) return 4; if(d<=14) return 7; if(d<=21) return 10; if(d<=30) return 15; if(d<=60) return 30; if(d<=90) return 40; return 50; }
+function challengeXPForTier(c,tier){ return tier?Math.round(challengeBaseXP(c)*(CHALLENGE_TIER[tier]?.mult||1)):0; }
+function maybeAwardChallengeXP(c){ const info=challengeSuccessInfo(c); if(!info.tier) return; const award=getChallengeAward(c.id); const targetXP=challengeXPForTier(c,info.tier); if(targetXP<=award.xp) return; const before=getChallengeLevelByXP(award.xp); const diff=targetXP-award.xp; award.xp=targetXP; award.tier=info.tier; const after=getChallengeLevelByXP(award.xp); if(after.level>before.level) showToast('챌린지 Lv.'+after.level+' '+after.name+' 달성!'); else showToast('챌린지 XP +'+diff); }
+function challengeStatusBadge(c){ const info=challengeSuccessInfo(c); if(!info.tier) return ''; const t=CHALLENGE_TIER[info.tier]; return '<span class="challenge-result-chip" style="background:'+t.color+'22;color:'+t.color+'">'+t.label+'</span>'; }
+function challengeLevelHTML(c){ const xp=getChallengeXP(c); const lv=getChallengeLevelByXP(xp); const next=getNextChallengeLevel(xp); const pct=next?Math.min(100,Math.round((xp-lv.xp)/(next.xp-lv.xp)*100)):100; const right=next?'XP '+xp+' / '+next.xp:'XP '+xp+' · 최고레벨'; return '<div class="challenge-level-box"><div class="challenge-level-top"><span class="challenge-level-name">Lv.'+lv.level+' '+lv.name+'</span><span class="challenge-xp-text">'+right+'</span></div><div class="challenge-xp-bar"><div class="challenge-xp-fill" style="width:'+pct+'%"></div></div></div>'; }
+function _chalStampCard(c){
+  const cl=state.challengeLogs[c.id]||{};
+  const stamped=Object.keys(cl).filter(d=>cl[d]);
+  const total=stamped.length;
+  const streak=_chalStreak(cl);
+  const isCount=c.type==='count';
+  const isMixed=c.type==='mixed';
+  const isPeriod=!isCount;
+  const targetCount=c.targetCount||0;
+  const remainingCount=Math.max(0,targetCount-total);
+  const startDateStr=c.startDate||'';
+  let endDateStr='';
+  if(startDateStr&&c.duration){
+    const e=new Date(startDateStr+'T00:00:00');
+    e.setDate(e.getDate()+c.duration-1);
+    endDateStr=`${e.getFullYear()}-${String(e.getMonth()+1).padStart(2,'0')}-${String(e.getDate()).padStart(2,'0')}`;
+  }
+  const periodDays=c.duration||0;
+  let progress, pct, statusBadge='';
+  if(isCount){
+    progress=`${total}/${targetCount}회`;
+    pct=Math.min(100,Math.round(total/(targetCount||1)*100));
+    if(remainingCount===0) statusBadge=`<span style="font-size:11px;background:rgba(255,200,0,0.2);color:var(--gold);padding:2px 8px;border-radius:20px;font-weight:700">🎉 목표 달성!</span>`;
+  } else if(isMixed){
+    const endExclusive=new Date((c.startDate||today())+'T00:00:00');endExclusive.setDate(endExclusive.getDate()+c.duration);
+    const daysLeft=Math.max(0,Math.ceil((endExclusive-new Date())/86400000));
+    const success=total>=targetCount;
+    progress=`${total}/${targetCount}회 · ${daysLeft}일 남음`;
+    pct=Math.min(100,Math.round(total/(targetCount||1)*100));
+    if(success) statusBadge=`<span style="font-size:11px;background:rgba(255,200,0,0.2);color:var(--gold);padding:2px 8px;border-radius:20px;font-weight:700">🎉 목표 달성!</span>`;
+    else if(daysLeft===0) statusBadge=`<span style="font-size:11px;background:rgba(230,57,70,0.15);color:#e63946;padding:2px 8px;border-radius:20px">⏰ 기간 종료</span>`;
+  } else {
+    progress=`${total}/${periodDays}일`;
+    pct=Math.min(100,Math.round(total/(periodDays||1)*100));
+  }
+  statusBadge=challengeStatusBadge(c)||statusBadge;
+
+  const targetChips=[];
+  if(isPeriod){
+    targetChips.push(`<div style="flex:1;min-width:130px;background:rgba(108,99,255,0.12);border:1px solid rgba(108,99,255,0.35);border-radius:12px;padding:10px 12px">
+      <div style="font-size:10px;color:#a8a4ff;font-weight:700;margin-bottom:4px">목표기간</div>
+      <div style="font-size:14px;font-weight:800;color:var(--text)">${periodDays}일</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:3px">${startDateStr} ~ ${endDateStr}</div>
+    </div>`);
+  }
+  if(isCount||isMixed){
+    targetChips.push(`<div style="flex:1;min-width:120px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.35);border-radius:12px;padding:10px 12px">
+      <div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:4px">목표횟수</div>
+      <div style="font-size:14px;font-weight:800;color:var(--text)">${total}/${targetCount}회</div>
+      <div style="font-size:11px;color:${remainingCount===0?'var(--gold)':'var(--text-dim)'};margin-top:3px">${remainingCount===0?'완료':'잔여 '+remainingCount+'회'}</div>
+    </div>`);
+  }
+  const targetSummary=targetChips.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">${targetChips.join('')}</div>`:'';
+
+  const offset=_chalCalOffset[c.id]||0;
+  const now=new Date();
+  const y=now.getFullYear(), m=now.getMonth()+offset;
+  const dispDate=new Date(y,m,1);
+  const dispY=dispDate.getFullYear(), dispM=dispDate.getMonth();
+  const daysInMonth=new Date(dispY,dispM+1,0).getDate();
+  const firstDow=new Date(dispY,dispM,1).getDay();
+  const monthLabel=`${dispY}년 ${dispM+1}월`;
+  const t=today();
+
+  let cells='';
+  for(let i=0;i<firstDow;i++) cells+=`<div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${dispY}-${String(dispM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const lvl=cl[ds];
+    const failReason=getFailReason('challenge',c.id,ds);
+    const failObj=failReason?FAIL_REASONS.find(x=>x.id===failReason):null;
+    const isStamped=!!lvl;
+    const stampEmoji=isStamped?(LEVEL_STAMP[lvl]||'⭐'):'';
+    const isToday=ds===t;
+    const future=ds>t;
+    const beforeStart=c.startDate&&ds<c.startDate;
+    const inPeriod=isPeriod&&startDateStr&&endDateStr&&ds>=startDateStr&&ds<=endDateStr;
+    const isPeriodStart=inPeriod&&ds===startDateStr;
+    const isPeriodEnd=inPeriod&&ds===endDateStr;
+    const afterPeriod=isPeriod&&endDateStr&&ds>endDateStr;
+    const clickable=!future&&!beforeStart&&!afterPeriod;
+    const canFail=!future&&!beforeStart&&!afterPeriod&&!isStamped;
+    cells+=`<div class="chal-stamp-cell${inPeriod?' in-period':''}${isPeriodStart?' period-start':''}${isPeriodEnd?' period-end':''}${isStamped?' stamped':''}${lvl==='max'?' stamp-max':lvl==='min'?' stamp-min':''}${isToday?' cal-today':''}${!clickable?' cal-dim':''}"
+      ${clickable?`onclick="stampChallenge('${c.id}','${ds}')"`:''}>
+      ${d}${isStamped?`<span class="stamp-mark">${stampEmoji}</span>`:failObj?`<span class="stamp-mark" style="color:#e63946">${failObj.emoji}</span>`:''}
+      ${canFail?`<button class="chal-fail-btn" onclick="openFailModal('${c.id}',event,'${ds}','challenge')" title="못 한 이유 기록">📝</button>`:''}
+    </div>`;
+  }
+
+  return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:20px;padding:16px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-weight:700;font-size:15px">${catIcon(getChallengeCategory(c))} ${c.name}</div>
+      ${statusBadge}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--text-dim)">${c.type==='count'?'횟수 목표':startDateStr+' 시작'} · ${progress}</div>
+      ${streak>0?`<div style="font-size:12px;font-weight:700;color:#ff6b35;background:rgba(255,107,53,0.12);padding:3px 10px;border-radius:20px">🔥 ${streak}일 연속</div>`:''}
+    </div>
+    ${challengeLevelHTML(c)}
+    ${targetSummary}
+    ${c.achieveMode==='levels'&&c.levelDesc?`<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      ${c.levelDesc.min?`<div style="font-size:11px;background:rgba(160,120,60,0.15);color:#c0944a;padding:3px 8px;border-radius:20px">🥉 ${c.levelDesc.min}</div>`:''}
+      ${c.levelDesc.standard?`<div style="font-size:11px;background:rgba(200,200,200,0.15);color:#b0b8c8;padding:3px 8px;border-radius:20px">🥈 ${c.levelDesc.standard}</div>`:''}
+      ${c.levelDesc.max?`<div style="font-size:11px;background:rgba(255,200,0,0.22);color:#ffe066;padding:3px 8px;border-radius:20px">🥇 ${c.levelDesc.max}</div>`:''}
+    </div>`:''}
+    <div style="background:rgba(255,255,255,0.06);border-radius:8px;height:5px;overflow:hidden;margin-bottom:12px">
+      <div style="height:100%;width:${pct}%;background:${catColor(getChallengeCategory(c))};border-radius:8px"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <button onclick="chalCalPrev('${c.id}')" style="background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;padding:0 8px">‹</button>
+      <div style="font-size:13px;font-weight:600">${monthLabel}</div>
+      <button onclick="chalCalNext('${c.id}')" style="background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;padding:0 8px">›</button>
+    </div>
+    <div class="chal-stamp-grid">
+      <div class="chal-dow">일</div><div class="chal-dow">월</div><div class="chal-dow">화</div><div class="chal-dow">수</div><div class="chal-dow">목</div><div class="chal-dow">금</div><div class="chal-dow">토</div>
+      ${cells}
+    </div>
+    ${(()=>{
+      const now=new Date();
+      const dow=now.getDay();
+      const mondayOffset=dow===0?-6:1-dow;
+      const weekDays=[];
+      for(let i=0;i<7;i++){
+        const d=new Date(now);
+        d.setDate(now.getDate()+mondayOffset+i);
+        weekDays.push(d.toISOString().slice(0,10));
+      }
+      const hasMemo=weekDays.some(d=>cl[d]||(state.challengeMemos[c.id]||{})[d]||getFailReason('challenge',c.id,d));
+      if(!hasMemo) return '';
+      const DOW_KR=['월','화','수','목','금','토','일'];
+      const rows=weekDays.map((d,i)=>{
+        const lvl=cl[d];
+        const stamped=!!lvl;
+        const memo=(state.challengeMemos[c.id]||{})[d]||'';
+        const failReason=getFailReason('challenge',c.id,d);
+        const failObj=failReason?FAIL_REASONS.find(x=>x.id===failReason):null;
+        if(!stamped&&!memo&&!failObj) return '';
+        const emoji=stamped?(LEVEL_STAMP[lvl]||'⭐'):'';
+        const levelLabel=stamped&&lvl&&lvl!==true?`<span style="font-size:10px;color:var(--text-dim);margin-left:4px">${LEVEL_LABEL[lvl]||''}</span>`:'';
+        return `<div style="display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+          <div style="min-width:28px;font-size:12px;color:var(--text-dim);padding-top:1px">${DOW_KR[i]}</div>
+          <div style="font-size:13px;white-space:nowrap">${failObj?failObj.emoji:emoji}${levelLabel}</div>
+          <div style="flex:1;font-size:12px;color:${failObj?'#e63946':memo?'var(--text)':'var(--text-dim)'};">${failObj?'못한 이유 · '+failObj.label:(memo||'')}</div>
+        </div>`;
+      }).filter(Boolean).join('');
+      if(!rows) return '';
+      return `<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:11px;color:var(--text-dim);font-weight:600;margin-bottom:6px;letter-spacing:0.5px">이번 주 기록</div>
+        ${rows}
+      </div>`;
+    })()}
+  </div>`;
+}
+function chalCalPrev(id){_chalCalOffset[id]=(_chalCalOffset[id]||0)-1;renderChallenge();}
+function chalCalNext(id){_chalCalOffset[id]=(_chalCalOffset[id]||0)+1;renderChallenge();}
+
+const LEVEL_STAMP = {min:'🥉', standard:'🥈', max:'🥇', true:'⭐'};
+const LEVEL_LABEL = {min:'최소달성', standard:'표준달성', max:'최대달성'};
+
+function stampChallenge(id, ds){
+  if(!state.challengeLogs[id]) state.challengeLogs[id]={};
+  const cur=state.challengeLogs[id][ds];
+  const c=state.challenges.find(x=>x.id===id);
+  if(cur){
+    state.challengeLogs[id][ds]=false;
+    if(state.challengeMemos[id]) delete state.challengeMemos[id][ds];
+    recalcStats(); checkTitleUnlock();
+    save(); renderChallenge(); renderToday(); renderChar(); renderCalendar(); renderMonthReport(); renderBreakdown();
+  } else {
+    if(getFailReason('challenge',id,ds)){showToast('📝 못한 이유를 먼저 지워주세요');return;}
+    const isLevels=(c&&c.achieveMode==='levels');
+    if(isLevels){
+      document.getElementById('level-challenge-id').value=id;
+      document.getElementById('level-challenge-ds').value=ds;
+      openModal('challenge-level-modal');
+    } else if(c&&c.memoEnabled!==false){
+      openChallengeMemoModal(id,ds,false,true);
+    } else {
+      completeChallenge(id,ds,true,'');
+    }
+  }
+}
+
+function selectChalLevel(level){
+  const id=document.getElementById('level-challenge-id').value;
+  const ds=document.getElementById('level-challenge-ds').value;
+  closeModal('challenge-level-modal');
+  const c=state.challenges.find(x=>x.id===id);
+  if(c&&c.memoEnabled!==false){
+    openChallengeMemoModal(id,ds,false,level);
+  } else {
+    completeChallenge(id,ds,level,'');
+  }
+}
+
 function renderManage(){
   // 카테고리
   document.getElementById('category-manage-list').innerHTML=
@@ -1897,7 +2382,7 @@ function renderManage(){
       <div class="manage-dot" style="background:${c.color}"></div>
       <div class="manage-info">
         <div class="manage-name">${c.icon} ${c.name}</div>
-        <div class="manage-sub">${state.routines.filter(r=>r.category===c.id).length}개 루틴</div>
+        <div class="manage-sub">루틴 ${state.routines.filter(r=>r.category===c.id).length}개 · 챌린지 ${state.challenges.filter(ch=>getChallengeCategory(ch)===c.id).length}개</div>
       </div>
       <div class="manage-actions">
         <button class="icon-btn" onclick="editCategory('${c.id}')">✏️</button>
@@ -1910,10 +2395,11 @@ function renderManage(){
   if(na.length){html+=`<div style="font-size:12px;color:var(--text-dim);margin:12px 0 8px">비활성화된 루틴</div>`;html+=na.map(routineManageCard).join('');}
   document.getElementById('manage-list').innerHTML=html||'<div class="empty-state">루틴이 없어요</div>';
   _initRoutineDrag();
-  const aC=state.challenges.filter(c=>isChallengeActive(c)),eC=state.challenges.filter(c=>!isChallengeActive(c));
-  let ch=aC.map(c=>challengeManageCard(c,true)).join('');
-  if(eC.length){ch+=`<div style="font-size:12px;color:var(--text-dim);margin:12px 0 8px">종료된 챌린지</div>`;ch+=eC.map(c=>challengeManageCard(c,false)).join('');}
+  const aC=state.challenges.filter(c=>c.active!==false),naC=state.challenges.filter(c=>c.active===false);
+  let ch=aC.map(c=>challengeManageCard(c)).join('');
+  if(naC.length){ch+=`<div style="font-size:12px;color:var(--text-dim);margin:12px 0 8px">비활성화된 챌린지</div>`;ch+=naC.map(c=>challengeManageCard(c)).join('');}
   document.getElementById('challenge-manage-list').innerHTML=ch||'<div class="empty-state">진행 중인 챌린지가 없어요</div>';
+  _initChallengeDrag();
 }
 function _initRoutineDrag() {
   const list = document.getElementById('manage-list');
@@ -2002,7 +2488,7 @@ function routineManageCard(r){
     <div class="drag-handle" title="순서 변경">⠿</div>
     <div class="manage-dot" style="background:${catColor(r.category)}"></div>
     <div class="manage-info">
-      <div class="manage-name">${r.name}</div>
+      <div class="manage-name">${routineEmoji(r)} ${r.name}</div>
       <div class="manage-sub">${catLabel(r.category)} · ${getFreqLabel(r.freq)}${r.group?' · '+(r.group==='night'?'🌙 나이트':'🌅 모닝'):''}</div>
     </div>
     <div class="manage-actions">
@@ -2011,39 +2497,122 @@ function routineManageCard(r){
     </div>
   </div>`;
 }
-function challengeManageCard(c,ia){
+function _initChallengeDrag() {
+  const list = document.getElementById('challenge-manage-list');
+  let dragSrc = null, touchDragEl = null, touchClone = null, touchStartY = 0;
+  list.querySelectorAll('.challenge-manage-card').forEach(card => {
+    const handle = card.querySelector('.drag-handle');
+    if (!handle) return;
+    handle.addEventListener('mousedown', () => { card.draggable = true; });
+    card.addEventListener('dragstart', e => { dragSrc = card; card.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    card.addEventListener('dragend', () => { card.draggable = false; card.classList.remove('dragging'); list.querySelectorAll('.challenge-manage-card').forEach(c => c.classList.remove('drag-over')); _saveChallengeOrder(); });
+    card.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+    card.addEventListener('dragenter', e => { e.preventDefault(); if (card !== dragSrc) card.classList.add('drag-over'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      if (dragSrc && dragSrc !== card) {
+        const cards = [...list.querySelectorAll('.challenge-manage-card')];
+        const si = cards.indexOf(dragSrc), ti = cards.indexOf(card);
+        if (si < ti) card.after(dragSrc); else card.before(dragSrc);
+      }
+      card.classList.remove('drag-over');
+    });
+    handle.addEventListener('touchstart', e => {
+      const touch = e.touches[0];
+      touchDragEl = card; touchStartY = touch.clientY; touchClone = card.cloneNode(true);
+      touchClone.style.cssText = `position:fixed;left:${card.getBoundingClientRect().left}px;top:${card.getBoundingClientRect().top}px;width:${card.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.4);`;
+      document.body.appendChild(touchClone); card.classList.add('dragging');
+    }, {passive: true});
+    handle.addEventListener('touchmove', e => {
+      if (!touchDragEl) return; e.preventDefault();
+      const touch = e.touches[0], dy = touch.clientY - touchStartY;
+      touchClone.style.top = (touchDragEl.getBoundingClientRect().top + dy) + 'px';
+      const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.challenge-manage-card');
+      list.querySelectorAll('.challenge-manage-card').forEach(c => c.classList.remove('drag-over'));
+      if (target && target !== touchDragEl) target.classList.add('drag-over');
+    }, {passive: false});
+    handle.addEventListener('touchend', e => {
+      if (!touchDragEl) return;
+      const touch = e.changedTouches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.challenge-manage-card');
+      if (target && target !== touchDragEl) {
+        const cards = [...list.querySelectorAll('.challenge-manage-card')];
+        const si = cards.indexOf(touchDragEl), ti = cards.indexOf(target);
+        if (si < ti) target.after(touchDragEl); else target.before(touchDragEl);
+      }
+      touchDragEl.classList.remove('dragging'); list.querySelectorAll('.challenge-manage-card').forEach(c => c.classList.remove('drag-over'));
+      touchClone.remove(); touchDragEl = null; touchClone = null; _saveChallengeOrder();
+    });
+  });
+}
+function _saveChallengeOrder() {
+  const ids = [...document.querySelectorAll('#challenge-manage-list .challenge-manage-card')].map(el => el.dataset.id);
+  state.challenges.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+  save(); renderToday(); renderChallenge();
+}
+function challengeManageCard(c){
+  const ia=c.active!==false;
   const cl=state.challengeLogs[c.id]||{},done=Object.values(cl).filter(Boolean).length;
-  return `<div class="challenge-manage-card" style="opacity:${ia?1:0.5}">
-    <div style="font-size:20px">⚡</div>
+  const isExpired=isChallengeActive(c)===false&&c.active!==false;
+  return `<div class="challenge-manage-card" data-id="${c.id}" style="opacity:${ia?1:0.5};border-color:${catColor(getChallengeCategory(c))}66">
+    <div class="drag-handle" title="순서 변경">⠿</div>
+    <div class="manage-dot" style="background:${catColor(getChallengeCategory(c))}"></div>
     <div class="manage-info">
       <div class="manage-name">${c.name}</div>
-      <div class="manage-sub">${c.type==='count'?`${done}/${c.targetCount}회 완료`:`${done}/${c.duration}일 완료 · ${ia?getDaysElapsed(c.startDate)+'일째':'종료'}`}</div>
+      <div class="manage-sub">${catLabel(getChallengeCategory(c))} · ${c.type==='count'?`${done}/${c.targetCount}회 완료`:c.type==='mixed'?`${done}/${c.targetCount}회 · ${ia&&!isExpired?getDaysElapsed(c.startDate)+'일째':'종료'}${isMixedSuccess(c)?' 🎉':''}`:  `${done}/${c.duration}일 완료 · ${ia&&!isExpired?getDaysElapsed(c.startDate)+'일째':'종료'}`}</div>
     </div>
-    <div class="manage-actions"><button class="icon-btn" onclick="editChallenge('${c.id}')">✏️</button></div>
+    <div class="manage-actions">
+      <button class="icon-btn" onclick="editChallenge('${c.id}')">✏️</button>
+      <button class="toggle-btn" onclick="toggleChallengeActive('${c.id}')">${ia?'🟢':'⭕'}</button>
+    </div>
   </div>`;
 }
 // ── FAIL REASON ───────────────────────────────────
 let failTargetDate = null;
 
-function openFailModal(routineId, ev, date) {
+function getFailBucket(type, date, create=false) {
+  const root = type==='challenge' ? state.challengeFailLogs : state.failLogs;
+  if (create && !root[date]) root[date] = {};
+  return root[date] || {};
+}
+function getFailReason(type, id, date) {
+  return getFailBucket(type,date)[id] || null;
+}
+function clearFailEntry(type, id, date) {
+  const root = type==='challenge' ? state.challengeFailLogs : state.failLogs;
+  if(root[date]){
+    delete root[date][id];
+    if(!Object.keys(root[date]).length) delete root[date];
+  }
+}
+function openFailModal(itemId, ev, date, type='routine') {
   if(ev) ev.stopPropagation();
   failTargetDate = date || today();
-  document.getElementById('fail-routine-id').value = routineId;
-  const cur = (state.failLogs[failTargetDate]||{})[routineId];
+  document.getElementById('fail-item-id').value = itemId;
+  document.getElementById('fail-item-type').value = type;
+  document.getElementById('fail-modal-title').textContent = type==='challenge' ? '챌린지를 못 한 이유가 뭐예요?' : '오늘 못 한 이유가 뭐예요?';
+  const cur = getFailReason(type, itemId, failTargetDate);
   document.getElementById('fail-reason-grid').innerHTML = FAIL_REASONS.map(r=>
     `<button class="fail-reason-btn${cur===r.id?' selected':''}" data-id="${r.id}" onclick="selectFailReason('${r.id}')">${r.emoji}<span>${r.label}</span></button>`
   ).join('');
   openModal('fail-modal');
 }
 function selectFailReason(reasonId) {
-  const routineId = document.getElementById('fail-routine-id').value;
+  const itemId = document.getElementById('fail-item-id').value;
+  const type = document.getElementById('fail-item-type').value || 'routine';
   const date = failTargetDate || today();
-  if (!state.failLogs[date]) state.failLogs[date] = {};
-  state.failLogs[date][routineId] = reasonId;
+  const bucket = getFailBucket(type, date, true);
+  bucket[itemId] = reasonId;
+  if(type==='challenge'){
+    if(state.challengeLogs[itemId]) state.challengeLogs[itemId][date]=false;
+    if(state.challengeMemos[itemId]) delete state.challengeMemos[itemId][date];
+    recalcStats(); checkTitleUnlock();
+  }
   save();
   closeModal('fail-modal');
-  if (date === today()) renderToday();
-  else openDayDetail(date);
+  if (date === today() || date === getTodayViewDate()) { renderToday(); renderChallenge(); renderChar(); renderCalendar(); renderMonthReport(); renderBreakdown(); }
+  else { renderChallenge(); openDayDetail(date); }
   showToast('기록했어요. 자책하지 말아요 💙');
 }
 // ── HISTORY CALENDAR ─────────────────────────────
@@ -2094,8 +2663,18 @@ function _renderHistoryCal() {
 function toggleHistoryDay(ds) {
   const {id} = _historyCtx;
   if (!state.logs[ds]) state.logs[ds] = {};
-  state.logs[ds][id] = !state.logs[ds][id];
-  if (!state.logs[ds][id]) delete state.logs[ds][id];
+  const wasDone = !!state.logs[ds][id];
+  state.logs[ds][id] = !wasDone;
+  if (!state.logs[ds][id]) {
+    delete state.logs[ds][id];
+    // failLog도 함께 제거
+    if (state.failLogs[ds]) {
+      delete state.failLogs[ds][id];
+      if (!Object.keys(state.failLogs[ds]).length) delete state.failLogs[ds];
+    }
+  }
+  // 해당 날 완료 루틴이 하나도 없으면 빈 객체 정리
+  if (!Object.keys(state.logs[ds]).length) delete state.logs[ds];
   save();
   _renderHistoryCal();
   if (ds === today()) renderToday();
@@ -2117,12 +2696,13 @@ function addLongPress(el, cb) {
 }
 
 function clearFailReason() {
-  const routineId = document.getElementById('fail-routine-id').value;
+  const itemId = document.getElementById('fail-item-id').value;
+  const type = document.getElementById('fail-item-type').value || 'routine';
   const date = failTargetDate || today();
-  if (state.failLogs[date]) delete state.failLogs[date][routineId];
+  clearFailEntry(type,itemId,date);
   save();
   closeModal('fail-modal');
-  if (date === today()) renderToday();
+  if (date === today() || date === getTodayViewDate()) { renderToday(); renderChallenge(); }
   else openDayDetail(date);
 }
 
@@ -2148,6 +2728,25 @@ function togglePastRoutine(routineId, dateStr) {
   renderBreakdown();
 }
 
+function togglePastChallenge(challengeId, dateStr) {
+  const c=state.challenges.find(x=>x.id===challengeId);
+  if(!c)return;
+  if(!state.challengeLogs[challengeId]) state.challengeLogs[challengeId]={};
+  const wasDone=!!state.challengeLogs[challengeId][dateStr];
+  if(!wasDone&&getFailReason('challenge',challengeId,dateStr)){showToast('📝 못한 이유를 먼저 지워주세요');return;}
+  state.challengeLogs[challengeId][dateStr]=!wasDone;
+  if(wasDone&&state.challengeMemos[challengeId]) delete state.challengeMemos[challengeId][dateStr];
+  const prev=state.character.stats[getChallengeCategory(c)]||0;
+  recalcStats();
+  if(!wasDone) maybeAwardChallengeXP(c);
+  if(!wasDone&&dateStr===today()) checkRankUp(getChallengeCategory(c), prev, state.character.stats[getChallengeCategory(c)]||0);
+  checkTitleUnlock();
+  save();
+  openDayDetail(dateStr);
+  if(dateStr===today()) renderToday();
+  renderChallenge();renderChar();renderCalendar();renderMonthReport();renderBreakdown();
+}
+
 function openDayDetail(dateStr) {
   const d = new Date(dateStr+'T00:00:00');
   const days = ['일','월','화','수','목','금','토'];
@@ -2159,7 +2758,7 @@ function openDayDetail(dateStr) {
   const ar  = state.routines.filter(r => r.active !== false);
   const isToday = dateStr === today();
 
-  const html = ar.map(r => {
+  const routineHtml = ar.map(r => {
     const done = log[r.id];
     const fr = fl[r.id] ? FAIL_REASONS.find(x => x.id === fl[r.id]) : null;
     return `<div class="day-detail-row ${done?'done':''}">
@@ -2171,8 +2770,24 @@ function openDayDetail(dateStr) {
       ${!done?`<button class="fail-btn" onclick="openFailModal('${r.id}',null,'${dateStr}')">📝</button>`:''}
     </div>`;
   }).join('');
+  const challengeRows=activeChallengesForDate(dateStr);
+  const challengeHtml=challengeRows.map(c=>{
+    const done=challengeDoneOnDate(c,dateStr);
+    const failReason=getFailReason('challenge',c.id,dateStr);
+    const fr=failReason?FAIL_REASONS.find(x=>x.id===failReason):null;
+    return `<div class="day-detail-row ${done?'done':''}">
+      <div class="check-circle" style="width:22px;height:22px;font-size:12px;flex-shrink:0;cursor:pointer" onclick="togglePastChallenge('${c.id}','${dateStr}')">${done?'✓':''}</div>
+      <div style="flex:1;min-width:0;cursor:pointer" onclick="togglePastChallenge('${c.id}','${dateStr}')">
+        <div style="font-size:14px;${done?'text-decoration:line-through;color:var(--text-dim)':''}">${catIcon(getChallengeCategory(c))} ${c.name}</div>
+        <div class="routine-sub">챌린지 · ${catLabel(getChallengeCategory(c))}</div>
+        ${fr?`<div class="fail-tag">${fr.emoji} ${fr.label}</div>`:''}
+      </div>
+      ${!done?`<button class="fail-btn" onclick="openFailModal('${c.id}',event,'${dateStr}','challenge')">📝</button>`:''}
+    </div>`;
+  }).join('');
+  const html=[routineHtml,challengeHtml].filter(Boolean).join(challengeHtml&&routineHtml?'<div style="height:8px"></div>':'');
 
-  document.getElementById('day-detail-list').innerHTML = html || '<div class="empty-state">루틴이 없어요</div>';
+  document.getElementById('day-detail-list').innerHTML = html || '<div class="empty-state">기록할 항목이 없어요</div>';
   openModal('day-detail-modal');
 }
 
@@ -2180,6 +2795,11 @@ function toggleRoutineActive(id){
   const r=state.routines.find(x=>x.id===id);
   if(r)r.active=r.active===false?true:false;
   save();renderManage();
+}
+function toggleChallengeActive(id){
+  const c=state.challenges.find(x=>x.id===id);
+  if(c)c.active=c.active===false?true:false;
+  save();renderChallenge();renderManage();renderToday();
 }
 
 // ── MODALS ────────────────────────────────────────
@@ -2247,6 +2867,7 @@ function openAddRoutine(){
   document.getElementById('routine-modal-title').textContent='루틴 추가';
   document.getElementById('edit-routine-id').value='';
   document.getElementById('routine-name-input').value='';
+  document.getElementById('routine-emoji-input').value='';
   document.getElementById('delete-routine-btn').style.display='none';
   cCat=getCats()[0]?.id||'health';cFreq='daily';cGroup='';syncSelects();openModal('routine-modal');
 }
@@ -2255,6 +2876,7 @@ function editRoutine(id){
   document.getElementById('routine-modal-title').textContent='루틴 수정';
   document.getElementById('edit-routine-id').value=id;
   document.getElementById('routine-name-input').value=r.name;
+  document.getElementById('routine-emoji-input').value=routineEmoji(r);
   document.getElementById('delete-routine-btn').style.display='';
   cCat=r.category;cFreq=r.freq;cGroup=r.group||'';syncSelects();openModal('routine-modal');
 }
@@ -2273,10 +2895,11 @@ function selectFreq(b){document.querySelectorAll('#freq-select .select-btn').for
 function selectGroup(b){document.querySelectorAll('#group-select .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cGroup=b.dataset.val;}
 function saveRoutine(){
   const name=document.getElementById('routine-name-input').value.trim();
+  const emoji=(document.getElementById('routine-emoji-input').value.trim()||suggestRoutineEmoji(name)).slice(0,4);
   if(!name){showToast('이름을 입력해주세요');return;}
   const eid=document.getElementById('edit-routine-id').value;
-  if(eid){const r=state.routines.find(x=>x.id===eid);if(r){r.name=name;r.category=cCat;r.freq=cFreq;r.group=cGroup;}}
-  else state.routines.push({id:'r'+Date.now(),name,category:cCat,freq:cFreq,group:cGroup,active:true});
+  if(eid){const r=state.routines.find(x=>x.id===eid);if(r){r.name=name;r.emoji=emoji;r.category=cCat;r.freq=cFreq;r.group=cGroup;}}
+  else state.routines.push({id:'r'+Date.now(),name,emoji,category:cCat,freq:cFreq,group:cGroup,active:true});
   save();closeModal('routine-modal');renderManage();renderToday();
   showToast(eid?'루틴이 수정됐어요':'루틴이 추가됐어요 🎉');
 }
@@ -2287,21 +2910,91 @@ function deleteCurrentRoutine(){
   save();closeModal('routine-modal');renderManage();renderToday();showToast('루틴이 삭제됐어요');
 }
 
-let cDur=7,cChalType='period';
+const CHALLENGE_DURATIONS = [
+  {days:1,label:'1일'}, {days:3,label:'3일'}, {days:7,label:'1주일'}, {days:14,label:'2주일'},
+  {days:21,label:'3주일'}, {days:30,label:'1개월'}, {days:60,label:'2개월'}, {days:90,label:'3개월'}, {days:100,label:'100일'}
+];
+function fmtDateObj(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function challengeDurationThreshold(days){ return days<7 ? days : Math.round(days*0.7); }
+function challengePeriodDoneCount(c){
+  const cl=state.challengeLogs[c.id]||{};
+  if(!c.startDate||!c.duration) return Object.values(cl).filter(Boolean).length;
+  let done=0;
+  const start=new Date(c.startDate+'T00:00:00');
+  for(let i=0;i<c.duration;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    if(cl[fmtDateObj(d)]) done++;
+  }
+  return done;
+}
+function isChallengeDurationPassed(days){
+  return state.challenges.some(c=>c.duration===days&&challengePeriodDoneCount(c)>=challengeDurationThreshold(days));
+}
+function isChallengeDurationUnlocked(days){
+  const idx=CHALLENGE_DURATIONS.findIndex(d=>d.days===days);
+  if(idx<=0) return true;
+  return isChallengeDurationPassed(CHALLENGE_DURATIONS[idx-1].days);
+}
+function firstUnlockedChallengeDuration(){
+  let last=CHALLENGE_DURATIONS[0].days;
+  for(const d of CHALLENGE_DURATIONS){ if(isChallengeDurationUnlocked(d.days)) last=d.days; else break; }
+  return last;
+}
+function renderDurationSelect(targetId, selected, handlerName, allowSelected=false){
+  const el=document.getElementById(targetId); if(!el)return;
+  el.innerHTML=CHALLENGE_DURATIONS.map((d,idx)=>{
+    const unlocked=isChallengeDurationUnlocked(d.days)||(allowSelected&&d.days===selected);
+    const need=challengeDurationThreshold(d.days);
+    const prev=CHALLENGE_DURATIONS[idx-1];
+    const title=unlocked?'':(prev?`${prev.label} 챌린지 ${challengeDurationThreshold(prev.days)}회 이상 달성 시 해금`:'');
+    return `<button type="button" class="select-btn${d.days===selected?' selected':''}${unlocked?'':' locked'}" data-val="${d.days}" ${unlocked?`onclick="${handlerName}(this)"`:'disabled'} title="${title}">${d.label}${unlocked?'':' 🔒'}${d.days>=7?`<span style="font-size:10px;color:var(--text-dim);margin-left:4px">${need}회</span>`:''}</button>`;
+  }).join('');
+}
+function syncDurationSelects(allowCurrent=false){
+  renderDurationSelect('duration-select', cDur, 'selectDuration', allowCurrent);
+  renderDurationSelect('duration-select-mixed', cDurMixed, 'selectDurationMixed', allowCurrent);
+}
+let cDur=1,cDurMixed=1,cChalType='period',cAchieveMode='simple',cChalCat='health';
+function selectAchieveMode(b){
+  document.querySelectorAll('#chal-achieve-select .select-btn').forEach(x=>x.classList.remove('selected'));
+  b.classList.add('selected');cAchieveMode=b.dataset.val;
+  document.getElementById('chal-level-desc-section').style.display=cAchieveMode==='levels'?'block':'none';
+}
+function _resetAchieveModeUI(mode){
+  cAchieveMode=mode||'simple';
+  document.querySelectorAll('#chal-achieve-select .select-btn').forEach(b=>b.classList.toggle('selected',b.dataset.val===cAchieveMode));
+  document.getElementById('chal-level-desc-section').style.display=cAchieveMode==='levels'?'block':'none';
+}
 function _resetChalTypeUI(type){
   cChalType=type;
   document.querySelectorAll('#chal-type-select .select-btn').forEach(b=>b.classList.toggle('selected',b.dataset.val===type));
   document.getElementById('chal-period-section').style.display=type==='period'?'':'none';
   document.getElementById('chal-count-section').style.display=type==='count'?'':'none';
+  document.getElementById('chal-mixed-section').style.display=type==='mixed'?'':'none';
+  syncDurationSelects();
 }
+function selectDurationMixed(b){if(b.disabled)return;document.querySelectorAll('#duration-select-mixed .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cDurMixed=parseInt(b.dataset.val);}
+function syncChalCatSelect(){
+  const el=document.getElementById('chal-cat-select');
+  if(!el)return;
+  el.innerHTML=getCats().map(c=>`<button class="select-btn${c.id===cChalCat?' selected':''}" data-val="${c.id}" onclick="selectChalCat(this)">${c.icon} ${c.name}</button>`).join('');
+}
+function selectChalCat(b){document.querySelectorAll('#chal-cat-select .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cChalCat=b.dataset.val;}
 function openAddChallenge(){
   document.getElementById('challenge-modal-title').textContent='챌린지 추가';
   document.getElementById('edit-challenge-id').value='';
   document.getElementById('challenge-name-input').value='';
   document.getElementById('delete-challenge-btn').style.display='none';
-  cDur=7;document.querySelectorAll('#duration-select .select-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  cChalCat=getCats()[0]?.id||'health';syncChalCatSelect();
+  cDur=firstUnlockedChallengeDuration();cDurMixed=cDur;syncDurationSelects();
   document.getElementById('challenge-count-input').value='10';
+  document.getElementById('challenge-start-input').value=today();
+  document.getElementById('challenge-memo-enabled').checked=true;
   _resetChalTypeUI('period');
+  _resetAchieveModeUI('simple');
+  document.getElementById('level-desc-min').value='';
+  document.getElementById('level-desc-standard').value='';
+  document.getElementById('level-desc-max').value='';
   openModal('challenge-modal');
 }
 function editChallenge(id){
@@ -2310,48 +3003,88 @@ function editChallenge(id){
   document.getElementById('edit-challenge-id').value=id;
   document.getElementById('challenge-name-input').value=c.name;
   document.getElementById('delete-challenge-btn').style.display='';
+  cChalCat=getChallengeCategory(c);syncChalCatSelect();
   _resetChalTypeUI(c.type||'period');
   if(c.type==='count'){
     document.getElementById('challenge-count-input').value=c.targetCount||10;
+  } else if(c.type==='mixed'){
+    cDurMixed=c.duration||firstUnlockedChallengeDuration();
+    syncDurationSelects(true);
+    document.getElementById('challenge-mixed-count-input').value=c.targetCount||5;
   } else {
-    cDur=c.duration;document.querySelectorAll('#duration-select .select-btn').forEach(b=>b.classList.toggle('selected',parseInt(b.dataset.val)===cDur));
+    cDur=c.duration||firstUnlockedChallengeDuration();
+    syncDurationSelects(true);
   }
+  document.getElementById('challenge-start-input').value=c.startDate||today();
+  document.getElementById('challenge-memo-enabled').checked=c.memoEnabled!==false;
+  _resetAchieveModeUI(c.achieveMode||'simple');
+  const ld=c.levelDesc||{};
+  document.getElementById('level-desc-min').value=ld.min||'';
+  document.getElementById('level-desc-standard').value=ld.standard||'';
+  document.getElementById('level-desc-max').value=ld.max||'';
   openModal('challenge-modal');
 }
-function selectDuration(b){document.querySelectorAll('#duration-select .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cDur=parseInt(b.dataset.val);}
+function selectDuration(b){if(b.disabled)return;document.querySelectorAll('#duration-select .select-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cDur=parseInt(b.dataset.val);}
 function selectChalType(b){
-  document.querySelectorAll('#chal-type-select .select-btn').forEach(x=>x.classList.remove('selected'));
-  b.classList.add('selected');cChalType=b.dataset.val;
-  document.getElementById('chal-period-section').style.display=cChalType==='period'?'':'none';
-  document.getElementById('chal-count-section').style.display=cChalType==='count'?'':'none';
+  _resetChalTypeUI(b.dataset.val);
 }
 function saveChallenge(){
   const name=document.getElementById('challenge-name-input').value.trim();
   if(!name){showToast('이름을 입력해주세요');return;}
   const eid=document.getElementById('edit-challenge-id').value;
+  const startDate=document.getElementById('challenge-start-input').value||today();
   const isCount=cChalType==='count';
-  const targetCount=isCount?Math.max(1,parseInt(document.getElementById('challenge-count-input').value)||10):null;
+  const isMixed=cChalType==='mixed';
+  const targetCount=(isCount||isMixed)?Math.max(1,parseInt(document.getElementById(isCount?'challenge-count-input':'challenge-mixed-count-input').value)||5):null;
+  const memoEnabled=document.getElementById('challenge-memo-enabled').checked;
+  const selectedDuration=isMixed?cDurMixed:(!isCount?cDur:null);
+  if(selectedDuration&&!isChallengeDurationUnlocked(selectedDuration)){
+    const old=eid?state.challenges.find(x=>x.id===eid):null;
+    if(!old||old.duration!==selectedDuration){showToast('이 기간은 아직 해금되지 않았어요');return;}
+  }
   if(eid){
     const c=state.challenges.find(x=>x.id===eid);
-    if(c){c.name=name;c.type=cChalType;if(isCount){c.targetCount=targetCount;delete c.duration;}else{c.duration=cDur;delete c.targetCount;}}
+    if(c){
+      c.name=name;c.type=cChalType;c.startDate=startDate;c.achieveMode=cAchieveMode;c.category=cChalCat;c.memoEnabled=memoEnabled;
+      if(cAchieveMode==='levels') c.levelDesc={min:document.getElementById('level-desc-min').value.trim(),standard:document.getElementById('level-desc-standard').value.trim(),max:document.getElementById('level-desc-max').value.trim()};
+      else delete c.levelDesc;
+      if(isCount){c.targetCount=targetCount;delete c.duration;}
+      else if(isMixed){c.duration=cDurMixed;c.targetCount=targetCount;}
+      else{c.duration=cDur;delete c.targetCount;}
+    }
   } else {
     const nid='c'+Date.now();
-    const obj={id:nid,name,type:cChalType,startDate:today()};
-    if(isCount) obj.targetCount=targetCount; else obj.duration=cDur;
+    const levelDesc=cAchieveMode==='levels'?{min:document.getElementById('level-desc-min').value.trim(),standard:document.getElementById('level-desc-standard').value.trim(),max:document.getElementById('level-desc-max').value.trim()}:null;
+    const obj={id:nid,name,category:cChalCat,type:cChalType,startDate,achieveMode:cAchieveMode,memoEnabled,...(levelDesc?{levelDesc}:{})};
+    if(isCount){obj.targetCount=targetCount;}
+    else if(isMixed){obj.duration=cDurMixed;obj.targetCount=targetCount;}
+    else{obj.duration=cDur;}
     state.challenges.push(obj);state.challengeLogs[nid]={};
   }
-  save();closeModal('challenge-modal');renderManage();renderToday();
+  save();closeModal('challenge-modal');renderChallenge();renderManage();renderToday();
   showToast(eid?'챌린지가 수정됐어요':'챌린지가 시작됐어요! ⚡');
 }
 function deleteCurrentChallenge(){
   const id=document.getElementById('edit-challenge-id').value;
   if(!id||!confirm('챌린지를 삭제할까요?'))return;
   state.challenges=state.challenges.filter(c=>c.id!==id);
-  save();closeModal('challenge-modal');renderManage();renderToday();showToast('챌린지가 삭제됐어요');
+  save();closeModal('challenge-modal');renderChallenge();renderManage();renderToday();showToast('챌린지가 삭제됐어요');
 }
 function isChallengeActive(c){
   if(c.type==='count'){const cl=state.challengeLogs[c.id]||{};return Object.values(cl).filter(Boolean).length<c.targetCount;}
+  if(c.type==='mixed'){
+    const cl=state.challengeLogs[c.id]||{};
+    const done=Object.values(cl).filter(Boolean).length;
+    const e=new Date(c.startDate);e.setDate(e.getDate()+c.duration);
+    const inPeriod=new Date()<e;
+    // 기간 내이면서 아직 목표 미달성, 또는 기간 지났지만 달성 여부 표시용으로 false
+    return inPeriod&&done<c.targetCount;
+  }
   const e=new Date(c.startDate);e.setDate(e.getDate()+c.duration);return new Date()<e;
+}
+function isMixedSuccess(c){
+  const cl=state.challengeLogs[c.id]||{};
+  return Object.values(cl).filter(Boolean).length>=c.targetCount;
 }
 function getDaysElapsed(s){return Math.floor((new Date()-new Date(s))/86400000);}
 
@@ -2360,6 +3093,12 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
 
 let toastTimer;
+function exportData(){
+  const box=document.getElementById('export-box');
+  box.value=localStorage.getItem('routine_rpg_v4')||'{}';
+  box.select();
+  showToast('텍스트를 선택했어요. 복사해 주세요!');
+}
 function showToast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg;el.classList.add('show');
